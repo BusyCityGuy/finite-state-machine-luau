@@ -1,5 +1,5 @@
 # Finite State Machine (FSM) in Luau
-A feature rich and fully typed implementation of a Finite sState Machine in Luau.
+A feature rich and fully typed implementation of a Finite State Machine in Luau.
 
 This project is licensed under the terms of the MIT license. See [LICENSE.md](https://github.com/busycityguy/finite-state-machine-luau/blob/main/LICENSE.md) for details.
 
