@@ -1,0 +1,4 @@
+[submodule "src/test-runner/TestEZ"]
+	path = src/test-runner/TestEZ
+	url = https://github.com/Roblox/testez.git
+	branch = master

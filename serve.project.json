@@ -1,0 +1,17 @@
+{
+	"emitLegacyScripts": false,
+	"name": "StateMachine",
+	"tree": {
+		"$className": "DataModel",
+		"ReplicatedStorage": {
+			"$className": "ReplicatedStorage",
+			"Source": {
+				"$path": "src",
+				"TestRunner": {
+					"$className": "Folder",
+					"$path": "test-runner"
+				}
+			}
+		}
+	}
+}

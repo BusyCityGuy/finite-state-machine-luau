@@ -108,8 +108,8 @@
 			light:handle(Event.SwitchOn) -- warns "Illegal event `SwitchOn` called during state `On`" with a stack trace
 --]]
 
-local Signal = require(script.Parent.dependencies.Signal)
-local ThreadQueue = require(script.Parent.dependencies.ThreadQueue)
+local Signal = require(script.Dependencies.Signal)
+local ThreadQueue = require(script.Dependencies.ThreadQueue)
 
 -- These types are added for readability to disambiguate what the string is meant to represent in types
 type State = string
