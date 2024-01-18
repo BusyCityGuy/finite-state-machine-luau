@@ -255,9 +255,7 @@ function StateMachine._queueEventAsync(self: ClassType, eventName: EventName, ev
 		end
 	end)
 
-	if not success then
-		error(errorMessage, 3)
-	end
+	return success, errorMessage
 end
 
 -- VarArgs get passed to the transition callbacks
