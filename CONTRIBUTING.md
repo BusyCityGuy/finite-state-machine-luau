@@ -40,14 +40,14 @@ Rojo builds from json files. This project includes two:
 | File                   | Purpose                                                                                                                                                                                                                               |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `default.project.json` | The distributable consumer build in the form of a single ModuleScript and its children. This defines the structure when a consumer links this project into their `project.json` file.                                                 |
-| `serve.project.json`   | Useful for developing this project, because it defines an entire place file that can be opened and synced rather than just the ModuleScript. This is the one you should build and serve with Rojo during development of this project. |
+| `test.project.json`    | Useful for developing this project, because it defines an entire place file that can be opened and synced rather than just the ModuleScript. This is the one you should build and serve with Rojo during development of this project. |
 
 To build for development, do either of the following:
 
-| Method        | Instructions                                                                                                                                            |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| CLI           | `rojo build serve.project.json -o StateMachine.rbxl`                                                                                                    |
-| VSC Extension | Click Rojo on the status bar at the bottom, mouse over `serve.project.json` in the pop-up menu, and click the Build icon on the right of the list item. |
+| Method        | Instructions                                                                                                                                           |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| CLI           | `rojo build test.project.json -o StateMachine-Test.rbxl`                                                                                               |
+| VSC Extension | Click Rojo on the status bar at the bottom, mouse over `test.project.json` in the pop-up menu, and click the Build icon on the right of the list item. |
 
 ## Sync file changes to studio
 
@@ -64,13 +64,13 @@ To sync the codebase from your file system to Roblox Studio, you'll need the Roj
 
 Rojo makes your code base accessible to studio by starting a local server that your Roblox Studio plugin reads from. To start the server do either of the following:
 
-| Method        | Instructions                                                                                  |
-| ------------- | --------------------------------------------------------------------------------------------- |
-| CLI           | `rojo serve serve.project.json`                                                               |
-| VSC Extension | Click Rojo on the status bar at the bottom, and click `serve.project.json` in the pop-up menu |
+| Method        | Instructions                                                                                 |
+| ------------- | -------------------------------------------------------------------------------------------- |
+| CLI           | `rojo serve test.project.json`                                                               |
+| VSC Extension | Click Rojo on the status bar at the bottom, and click `test.project.json` in the pop-up menu |
 
 Then, in the Roblox Studio Rojo plugin, click `Connect`.
 
 ### Run tests
 
-This project uses [TestEZ](https://roblox.github.io/testez/) to ensure the state machine works as intended. To run tests in the project, open the place file [built in the above step](#build-the-project) in Roblox Studio and run the file. The output window will show the test results.
+This project uses [TestEZ](https://roblox.github.io/testez/) to ensure the state machine works as intended. To run tests in the project, open the test place file [built in the above step](#build-the-project) in Roblox Studio and run the file. The output widget will show the test results.

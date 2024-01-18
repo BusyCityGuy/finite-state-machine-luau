@@ -204,6 +204,8 @@
 --     end)
 -- end
 
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
 local A = "A"
 local B = "B"
 local C = "C"
@@ -215,7 +217,7 @@ local function to(state: string)
 end
 
 return function()
-	local StateMachine = require(script.Parent.Parent.StateMachine)
+	local StateMachine = require(ReplicatedStorage.Source.StateMachine)
 
 	describe("new", function()
 		it("should return a new state machine", function()
@@ -270,12 +272,22 @@ return function()
 						},
 					},
 				},
+				toA = {
+					canBeFinal = false,
+					from = {
+						B = {
+							beforeAsync = to(A),
+						},
+					},
+				},
 			}
 
 			local stateMachine = StateMachine.new(initialState, eventsByName)
 			expect(stateMachine._validEventNamesByState.A).to.be.ok()
 			expect(stateMachine._validEventNamesByState.A[1]).to.equal("toB")
-			expect(stateMachine._validEventNamesByState.A[2]).to.equal("toB")
+			expect(stateMachine._validEventNamesByState.B).to.be.ok()
+			expect(stateMachine._validEventNamesByState.B[1]).to.equal("toB")
+			expect(stateMachine._validEventNamesByState.B[2]).to.equal("toA")
 		end)
 
 		it("should set handlers by event name", function()
