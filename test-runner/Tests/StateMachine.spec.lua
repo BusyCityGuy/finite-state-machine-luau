@@ -340,6 +340,27 @@ return function()
 			expect(handlers[TO_X_EVENT]).to.be.a("function")
 			expect(handlers[TO_Y_EVENT]).to.be.a("function")
 		end)
+
+		it("should make signals available", function()
+			local eventsByName = {
+				[TO_X_EVENT] = {
+					canBeFinal = true,
+					from = {
+						[X_STATE] = {
+							beforeAsync = TO_X_HANDLER,
+						},
+					},
+				},
+			}
+
+			local stateMachine = StateMachine.new(X_STATE, eventsByName)
+
+			expect(stateMachine.beforeEvent).to.be.ok()
+			expect(stateMachine.leavingState).to.be.ok()
+			expect(stateMachine.stateEntered).to.be.ok()
+			expect(stateMachine.afterEvent).to.be.ok()
+			expect(stateMachine.finished).to.be.ok()
+		end)
 	end)
 
 	-- describe("handle", function()
@@ -436,7 +457,7 @@ return function()
 	-- 	end)
 	-- end)
 
-	describe("debugEnabled", function()
+	describe("_isDebugEnabled", function()
 		it("should default to false", function()
 			local eventsByName = {
 				[TO_X_EVENT] = {
