@@ -70,3 +70,7 @@ Rojo makes your code base accessible to studio by starting a local server that y
 | VSC Extension | Click Rojo on the status bar at the bottom, and click `serve.project.json` in the pop-up menu |
 
 Then, in the Roblox Studio Rojo plugin, click `Connect`.
+
+### Run tests
+
+This project uses [TestEZ](https://roblox.github.io/testez/) to ensure the state machine works as intended. To run tests in the project, open the place file [built in the above step](#build-the-project) in Roblox Studio and run the file. The output window will show the test results.
