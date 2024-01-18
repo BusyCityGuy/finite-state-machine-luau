@@ -108,7 +108,7 @@
 -- 		local transition = event.from[beforeState]
 -- 		assert(transition, `Illegal event {eventName} called during state {beforeState}`)
 
--- 		self.beforeEvent:Fire(eventName, beforeState)
+-- 		self[BEFORE_EVENT_SIGNAL]:Fire(eventName, beforeState)
 -- 		local afterState = transition.beforeAsync(table.unpack(args))
 -- 		if self._isDestroyed then
 -- 			return
@@ -117,9 +117,9 @@
 -- 		self:_log(`Transitioning from {beforeState} to {afterState}`)
 
 -- 		if afterState ~= beforeState then
--- 			self.leavingState:Fire(beforeState, afterState)
+-- 			self[LEAVING_STATE_SIGNAL]:Fire(beforeState, afterState)
 -- 			self._currentState = afterState
--- 			self.stateEntered:Fire(afterState, beforeState)
+-- 			self[STATE_ENTERED_SIGNAL]:Fire(afterState, beforeState)
 -- 			self:_log("Valid events:", self:getValidEvents())
 -- 		end
 
@@ -130,7 +130,7 @@
 -- 			end
 -- 		end
 
--- 		self.afterEvent:Fire(eventName, afterState, beforeState)
+-- 		self[AFTER_EVENT_SIGNAL]:Fire(eventName, afterState, beforeState)
 
 -- 		local isFinished = not afterState
 
@@ -141,7 +141,7 @@
 -- 			)
 -- 			-- State machine finished
 -- 			self:_log("Finished")
--- 			self.finished:Fire(beforeState)
+-- 			self[FINISHED_SIGNAL]:Fire(beforeState)
 -- 		end
 -- 	end)
 
@@ -181,11 +181,11 @@
 
 -- function StateMachine.destroy(self: ClassType)
 -- 	self._isDestroyed = true
--- 	self.beforeEvent:DisconnectAll()
--- 	self.leavingState:DisconnectAll()
--- 	self.stateEntered:DisconnectAll()
--- 	self.afterEvent:DisconnectAll()
--- 	self.finished:DisconnectAll()
+-- 	self[BEFORE_EVENT_SIGNAL]:DisconnectAll()
+-- 	self[LEAVING_STATE_SIGNAL]:DisconnectAll()
+-- 	self[STATE_ENTERED_SIGNAL]:DisconnectAll()
+-- 	self[AFTER_EVENT_SIGNAL]:DisconnectAll()
+-- 	self[FINISHED_SIGNAL]:DisconnectAll()
 -- end
 
 -- return function()
@@ -210,10 +210,26 @@ local TestService = game:GetService("TestService")
 -- States
 local X_STATE = "X_STATE"
 local Y_STATE = "Y_STATE"
+local FINISH_STATE = nil
 
 -- Events
 local TO_X_EVENT = "TO_X_EVENT"
 local TO_Y_EVENT = "TO_Y_EVENT"
+local FINISH_EVENT = "FINISH_EVENT"
+
+-- Signals
+local BEFORE_EVENT_SIGNAL = "beforeEvent"
+local LEAVING_STATE_SIGNAL = "leavingState"
+local STATE_ENTERED_SIGNAL = "stateEntered"
+local AFTER_EVENT_SIGNAL = "afterEvent"
+local FINISHED_SIGNAL = "finished"
+local ORDERED_SIGNALS = {
+	BEFORE_EVENT_SIGNAL,
+	LEAVING_STATE_SIGNAL,
+	STATE_ENTERED_SIGNAL,
+	AFTER_EVENT_SIGNAL,
+	FINISHED_SIGNAL,
+}
 
 -- Transition handlers
 local function to(state: string)
@@ -223,6 +239,7 @@ local function to(state: string)
 end
 local TO_X_HANDLER = to(X_STATE)
 local TO_Y_HANDLER = to(Y_STATE)
+local FINISH_HANDLER = to(FINISH_STATE)
 
 return function()
 	local StateMachine = require(ReplicatedStorage.Source.StateMachine)
@@ -355,43 +372,164 @@ return function()
 
 			local stateMachine = StateMachine.new(X_STATE, eventsByName)
 
-			expect(stateMachine.beforeEvent).to.be.ok()
-			expect(stateMachine.leavingState).to.be.ok()
-			expect(stateMachine.stateEntered).to.be.ok()
-			expect(stateMachine.afterEvent).to.be.ok()
-			expect(stateMachine.finished).to.be.ok()
+			expect(stateMachine[BEFORE_EVENT_SIGNAL]).to.be.ok()
+			expect(stateMachine[LEAVING_STATE_SIGNAL]).to.be.ok()
+			expect(stateMachine[STATE_ENTERED_SIGNAL]).to.be.ok()
+			expect(stateMachine[AFTER_EVENT_SIGNAL]).to.be.ok()
+			expect(stateMachine[FINISHED_SIGNAL]).to.be.ok()
 		end)
 	end)
 
-	-- describe("handle", function()
-	-- 	it("should handle events correctly", function()
-	-- 		local initialState = "A"
-	-- 		local eventsByName = {
-	-- 			toB = {
-	-- 				canBeFinal = false,
-	-- 				from = {
-	-- 					A = {
-	-- 						beforeAsync = TO_Y_HANDLER,
-	-- 					},
-	-- 				},
-	-- 			},
-	-- 		}
+	describe("handle", function()
+		local eventsByName = {
+			[TO_Y_EVENT] = {
+				canBeFinal = false,
+				from = {
+					[X_STATE] = {
+						beforeAsync = TO_Y_HANDLER,
+					},
+					[Y_STATE] = {
+						beforeAsync = TO_Y_HANDLER,
+					},
+				},
+			},
+			[TO_X_EVENT] = {
+				canBeFinal = false,
+				from = {
+					[Y_STATE] = {
+						beforeAsync = TO_X_HANDLER,
+					},
+				},
+			},
+		}
 
-	-- 		local stateMachine = StateMachine.new(initialState, eventsByName)
+		local stateMachine = StateMachine.new(X_STATE, eventsByName)
+		local validEventNamesFromX = stateMachine._validEventNamesByState[X_STATE]
+		local validEventNamesFromY = stateMachine._validEventNamesByState[Y_STATE]
 
-	-- 		-- Test handling a valid event
-	-- 		stateMachine:handle("toB")
-	-- 		expect(stateMachine._currentState).to.equal("B")
+		expect(validEventNamesFromX).to.be.a("table")
+		expect(validEventNamesFromY).to.be.a("table")
 
-	-- 		-- Test handling an invalid event
-	-- 		local success, errorMessage = pcall(function()
-	-- 			stateMachine:handle("toA")
-	-- 		end)
-	-- 		expect(success).never.to.be.ok()
-	-- 		expect(errorMessage).to.be.a("string")
-	-- 		expect(errorMessage:find("Invalid event name passed to handle")).to.be.ok()
-	-- 	end)
-	-- end)
+		expect(Dict.count(validEventNamesFromX)).to.equal(1)
+		expect(Dict.includes(validEventNamesFromX, TO_Y_EVENT)).to.be.ok()
+
+		expect(Dict.count(validEventNamesFromY)).to.equal(2)
+		expect(Dict.includes(validEventNamesFromY, TO_X_EVENT)).to.be.ok()
+		expect(Dict.includes(validEventNamesFromY, TO_Y_EVENT)).to.be.ok()
+
+		-- it("", function()
+		-- 	local eventsByName = {
+		-- 		[TO_X_EVENT] = {
+		-- 			canBeFinal = true,
+		-- 			from = {
+		-- 				[X_STATE] = {
+		-- 					beforeAsync = TO_X_HANDLER,
+		-- 				},
+		-- 			},
+		-- 		},
+		-- 	}
+
+		-- 	local stateMachine = StateMachine.new(X_STATE, eventsByName)
+		-- end)
+
+		it("should fire signals in the correct order", function()
+			local initialState = X_STATE
+			local currentSignalIndex = 0
+			local eventsByName = {
+				[FINISH_EVENT] = {
+					canBeFinal = true,
+					from = {
+						[X_STATE] = {
+							beforeAsync = FINISH_HANDLER,
+						},
+					},
+				},
+			}
+
+			local stateMachine = StateMachine.new(initialState, eventsByName)
+
+			-- Queue event
+			stateMachine:handle(FINISH_EVENT)
+
+			local mainThread = coroutine.running()
+			local timeout = 0.5
+			local timeoutThread = task.delay(timeout, function()
+				local numEventsNotFired = #ORDERED_SIGNALS - currentSignalIndex
+				error(`Timed out waiting for {numEventsNotFired} events after {timeout} seconds`)
+				coroutine.resume(mainThread)
+			end)
+
+			-- Set up event connections
+			for _, signalName in ORDERED_SIGNALS do
+				stateMachine[signalName]:Connect(function(_, _)
+					if coroutine.status(timeoutThread) ~= "suspended" then
+						return
+					end
+					currentSignalIndex += 1
+					expect(ORDERED_SIGNALS[currentSignalIndex]).to.equal(signalName)
+
+					if currentSignalIndex == #ORDERED_SIGNALS then
+						task.cancel(timeoutThread)
+						coroutine.resume(mainThread)
+					end
+				end)
+			end
+
+			coroutine.yield(mainThread)
+		end)
+
+		-- it("should fire signals with correct parameters", function()
+		-- 	local initialState = X_STATE
+		-- 	local firstEvent = TO_Y_EVENT
+		-- 	local secondState = Y_STATE
+		-- 	local secondEvent = TO_X_EVENT
+		-- 	local thirdState = X_STATE
+
+		-- 	local expectedSignalOrder = {
+		-- 		[1] = BEFORE_EVENT_SIGNAL,
+		-- 		[2] = LEAVING_STATE_SIGNAL,
+		-- 		[3] = STATE_ENTERED_SIGNAL,
+		-- 		[4] = AFTER_EVENT_SIGNAL,
+		-- 		[5] = FINISHED_SIGNAL,
+		-- 	}
+		-- 	local currentSignalIndex = 0
+
+		-- 	local eventsByName = {
+		-- 		[TO_Y_EVENT] = {
+		-- 			canBeFinal = false,
+		-- 			from = {
+		-- 				[X_STATE] = {
+		-- 					beforeAsync = TO_Y_HANDLER,
+		-- 				},
+		-- 			},
+		-- 		},
+		-- 		[TO_X_EVENT] = {
+		-- 			canBeFinal = false,
+		-- 			from = {
+		-- 				[Y_STATE] = {
+		-- 					beforeAsync = TO_X_HANDLER,
+		-- 				},
+		-- 			},
+		-- 		},
+		-- 	}
+
+		-- 	local stateMachine = StateMachine.new(initialState, eventsByName)
+
+		-- 	-- Queue event
+		-- 	stateMachine:handle(firstEvent)
+
+		-- 	-- State should not be changed yet, it should defer handling to allow connections to be made
+		-- 	expect(stateMachine._currentState).to.equal(initialState)
+
+		-- 	-- Set up event connections
+		-- 	for _, signalName in expectedSignalOrder do
+		-- 		stateMachine[signalName]:Connect(function(_, _)
+		-- 			currentSignalIndex += 1
+		-- 			expect(expectedSignalOrder[currentSignalIndex]).to.equal(signalName)
+		-- 		end)
+		-- 	end
+		-- end)
+	end)
 
 	-- describe("getState", function()
 	-- 	it("should return the current state correctly", function()
@@ -515,11 +653,11 @@ return function()
 	-- 		-- Test destroying the state machine
 	-- 		stateMachine:destroy()
 	-- 		expect(stateMachine._isDestroyed).to.equal(true)
-	-- 		expect(stateMachine.beforeEvent:getConnectionCount()).to.equal(0)
-	-- 		expect(stateMachine.leavingState:getConnectionCount()).to.equal(0)
-	-- 		expect(stateMachine.stateEntered:getConnectionCount()).to.equal(0)
-	-- 		expect(stateMachine.afterEvent:getConnectionCount()).to.equal(0)
-	-- 		expect(stateMachine.finished:getConnectionCount()).to.equal(0)
+	-- 		expect(stateMachine[BEFORE_EVENT_SIGNAL]:getConnectionCount()).to.equal(0)
+	-- 		expect(stateMachine[LEAVING_STATE_SIGNAL]:getConnectionCount()).to.equal(0)
+	-- 		expect(stateMachine[STATE_ENTERED_SIGNAL]:getConnectionCount()).to.equal(0)
+	-- 		expect(stateMachine[AFTER_EVENT_SIGNAL]:getConnectionCount()).to.equal(0)
+	-- 		expect(stateMachine[FINISHED_SIGNAL]:getConnectionCount()).to.equal(0)
 	-- 	end)
 	-- end)
 end
@@ -610,7 +748,7 @@ end
 -- 			local machine = createTestMachine()
 
 -- 			local events = {}
--- 			machine.finished:Connect(function(state)
+-- 			machine[FINISHED_SIGNAL]:Connect(function(state)
 -- 				table.insert(events, state)
 -- 			end)
 
