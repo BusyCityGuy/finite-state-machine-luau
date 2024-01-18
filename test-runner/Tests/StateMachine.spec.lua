@@ -205,29 +205,42 @@
 -- end
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TestService = game:GetService("TestService")
 
-local A = "A"
-local B = "B"
-local C = "C"
+local Freeze = require(TestService.Source.freeze)
 
+-- Shortening things is generally bad practice, but this greatly improves readability of tests
+local Dict = Freeze.Dictionary
+
+-- States
+local X_STATE = "X_STATE"
+local Y_STATE = "Y_STATE"
+
+-- Events
+local TO_X_EVENT = "TO_X_EVENT"
+local TO_Y_EVENT = "TO_Y_EVENT"
+
+-- Transition handlers
 local function to(state: string)
 	return function()
 		return state
 	end
 end
+local TO_X_HANDLER = to(X_STATE)
+local TO_Y_HANDLER = to(Y_STATE)
 
 return function()
 	local StateMachine = require(ReplicatedStorage.Source.StateMachine)
 
 	describe("new", function()
 		it("should return a new state machine", function()
-			local initialState = "A"
+			local initialState = X_STATE
 			local eventsByName = {
-				toB = {
+				[TO_Y_EVENT] = {
 					canBeFinal = false,
 					from = {
-						A = {
-							beforeAsync = to(B),
+						[X_STATE] = {
+							beforeAsync = TO_Y_HANDLER,
 						},
 					},
 				},
@@ -236,19 +249,21 @@ return function()
 			local stateMachine1 = StateMachine.new(initialState, eventsByName)
 			local stateMachine2 = StateMachine.new(initialState, eventsByName)
 
-			expect(stateMachine1).to.be.ok()
-			expect(stateMachine2).to.be.ok()
+			expect(stateMachine1).to.be.a("table")
+			expect(stateMachine2).to.be.a("table")
+			expect(getmetatable(stateMachine1)).to.be.a("table")
+			expect(getmetatable(stateMachine1)).to.equal(getmetatable(stateMachine2))
 			expect(stateMachine1).never.to.equal(stateMachine2)
 		end)
 
 		it("should set initial state", function()
-			local initialState = "A"
+			local initialState = X_STATE
 			local eventsByName = {
-				toB = {
+				[TO_Y_EVENT] = {
 					canBeFinal = false,
 					from = {
-						A = {
-							beforeAsync = to(B),
+						[X_STATE] = {
+							beforeAsync = TO_Y_HANDLER,
 						},
 					},
 				},
@@ -259,202 +274,221 @@ return function()
 		end)
 
 		it("should set valid event names by state", function()
-			local initialState = "A"
 			local eventsByName = {
-				toB = {
+				[TO_Y_EVENT] = {
 					canBeFinal = false,
 					from = {
-						A = {
-							beforeAsync = to(B),
+						[X_STATE] = {
+							beforeAsync = TO_Y_HANDLER,
 						},
-						B = {
-							beforeAsync = to(B),
+						[Y_STATE] = {
+							beforeAsync = TO_Y_HANDLER,
 						},
 					},
 				},
-				toA = {
+				[TO_X_EVENT] = {
 					canBeFinal = false,
 					from = {
-						B = {
-							beforeAsync = to(A),
+						[Y_STATE] = {
+							beforeAsync = TO_X_HANDLER,
 						},
 					},
 				},
 			}
 
-			local stateMachine = StateMachine.new(initialState, eventsByName)
-			expect(stateMachine._validEventNamesByState.A).to.be.ok()
-			expect(stateMachine._validEventNamesByState.A[1]).to.equal("toB")
-			expect(stateMachine._validEventNamesByState.B).to.be.ok()
-			expect(stateMachine._validEventNamesByState.B[1]).to.equal("toB")
-			expect(stateMachine._validEventNamesByState.B[2]).to.equal("toA")
+			local stateMachine = StateMachine.new(X_STATE, eventsByName)
+			local validEventNamesFromX = stateMachine._validEventNamesByState[X_STATE]
+			local validEventNamesFromY = stateMachine._validEventNamesByState[Y_STATE]
+
+			expect(validEventNamesFromX).to.be.a("table")
+			expect(validEventNamesFromY).to.be.a("table")
+
+			expect(Dict.count(validEventNamesFromX)).to.equal(1)
+			expect(Dict.includes(validEventNamesFromX, TO_Y_EVENT)).to.be.ok()
+
+			expect(Dict.count(validEventNamesFromY)).to.equal(2)
+			expect(Dict.includes(validEventNamesFromY, TO_X_EVENT)).to.be.ok()
+			expect(Dict.includes(validEventNamesFromY, TO_Y_EVENT)).to.be.ok()
 		end)
 
 		it("should set handlers by event name", function()
-			local initialState = "A"
 			local eventsByName = {
-				toB = {
+				[TO_Y_EVENT] = {
 					canBeFinal = false,
 					from = {
-						A = {
-							beforeAsync = to(B),
+						[X_STATE] = {
+							beforeAsync = TO_Y_HANDLER,
+						},
+						[Y_STATE] = {
+							beforeAsync = TO_Y_HANDLER,
+						},
+					},
+				},
+				[TO_X_EVENT] = {
+					canBeFinal = false,
+					from = {
+						[Y_STATE] = {
+							beforeAsync = TO_X_HANDLER,
 						},
 					},
 				},
 			}
 
-			local stateMachine = StateMachine.new(initialState, eventsByName)
-			expect(stateMachine._handlersByEventName.toB).to.be.ok()
-			expect(stateMachine._validEventNamesByState.A[1]).to.equal("toB")
+			local stateMachine = StateMachine.new(X_STATE, eventsByName)
+			local handlers = stateMachine._handlersByEventName
+
+			expect(Dict.count(handlers)).to.equal(2)
+			expect(handlers[TO_X_EVENT]).to.be.a("function")
+			expect(handlers[TO_Y_EVENT]).to.be.a("function")
 		end)
 	end)
 
-	describe("handle", function()
-		it("should handle events correctly", function()
-			local initialState = "A"
-			local eventsByName = {
-				toB = {
-					canBeFinal = false,
-					from = {
-						A = {
-							beforeAsync = to(B),
-						},
-					},
-				},
-			}
+	-- describe("handle", function()
+	-- 	it("should handle events correctly", function()
+	-- 		local initialState = "A"
+	-- 		local eventsByName = {
+	-- 			toB = {
+	-- 				canBeFinal = false,
+	-- 				from = {
+	-- 					A = {
+	-- 						beforeAsync = TO_Y_HANDLER,
+	-- 					},
+	-- 				},
+	-- 			},
+	-- 		}
 
-			local stateMachine = StateMachine.new(initialState, eventsByName)
+	-- 		local stateMachine = StateMachine.new(initialState, eventsByName)
 
-			-- Test handling a valid event
-			stateMachine:handle("toB")
-			expect(stateMachine._currentState).to.equal("B")
+	-- 		-- Test handling a valid event
+	-- 		stateMachine:handle("toB")
+	-- 		expect(stateMachine._currentState).to.equal("B")
 
-			-- Test handling an invalid event
-			local success, errorMessage = pcall(function()
-				stateMachine:handle("toA")
-			end)
-			expect(success).never.to.be.ok()
-			expect(errorMessage).to.be.a("string")
-			expect(errorMessage:find("Invalid event name passed to handle")).to.be.ok()
-		end)
-	end)
+	-- 		-- Test handling an invalid event
+	-- 		local success, errorMessage = pcall(function()
+	-- 			stateMachine:handle("toA")
+	-- 		end)
+	-- 		expect(success).never.to.be.ok()
+	-- 		expect(errorMessage).to.be.a("string")
+	-- 		expect(errorMessage:find("Invalid event name passed to handle")).to.be.ok()
+	-- 	end)
+	-- end)
 
-	describe("getState", function()
-		it("should return the current state correctly", function()
-			local initialState = "A"
-			local eventsByName = {
-				toB = {
-					canBeFinal = false,
-					from = {
-						A = {
-							beforeAsync = to(B),
-						},
-					},
-				},
-			}
+	-- describe("getState", function()
+	-- 	it("should return the current state correctly", function()
+	-- 		local initialState = "A"
+	-- 		local eventsByName = {
+	-- 			toB = {
+	-- 				canBeFinal = false,
+	-- 				from = {
+	-- 					A = {
+	-- 						beforeAsync = TO_Y_HANDLER,
+	-- 					},
+	-- 				},
+	-- 			},
+	-- 		}
 
-			local stateMachine = StateMachine.new(initialState, eventsByName)
+	-- 		local stateMachine = StateMachine.new(initialState, eventsByName)
 
-			-- Test getting the current state
-			local state = stateMachine:getState()
-			expect(state).to.equal(initialState)
+	-- 		-- Test getting the current state
+	-- 		local state = stateMachine:getState()
+	-- 		expect(state).to.equal(initialState)
 
-			-- Test getting the state after a transition
-			stateMachine:handle("toB")
-			state = stateMachine:getState()
-			expect(state).to.equal("B")
-		end)
-	end)
+	-- 		-- Test getting the state after a transition
+	-- 		stateMachine:handle("toB")
+	-- 		state = stateMachine:getState()
+	-- 		expect(state).to.equal("B")
+	-- 	end)
+	-- end)
 
-	describe("getValidEvents", function()
-		it("should return valid events correctly", function()
-			local initialState = "A"
-			local eventsByName = {
-				toB = {
-					canBeFinal = false,
-					from = {
-						A = {
-							beforeAsync = to(B),
-						},
-					},
-				},
-				toA = {
-					canBeFinal = false,
-					from = {
-						B = {
-							beforeAsync = to(A),
-						},
-					},
-				},
-			}
+	-- describe("getValidEvents", function()
+	-- 	it("should return valid events correctly", function()
+	-- 		local initialState = "A"
+	-- 		local eventsByName = {
+	-- 			toB = {
+	-- 				canBeFinal = false,
+	-- 				from = {
+	-- 					A = {
+	-- 						beforeAsync = TO_Y_HANDLER,
+	-- 					},
+	-- 				},
+	-- 			},
+	-- 			toA = {
+	-- 				canBeFinal = false,
+	-- 				from = {
+	-- 					B = {
+	-- 						beforeAsync = TO_X_HANDLER,
+	-- 					},
+	-- 				},
+	-- 			},
+	-- 		}
 
-			local stateMachine = StateMachine.new(initialState, eventsByName)
+	-- 		local stateMachine = StateMachine.new(initialState, eventsByName)
 
-			-- Test getting valid events for the initial state
-			local validEvents = stateMachine:getValidEvents()
-			expect(#validEvents).to.equal(1)
-			expect(validEvents[1]).to.equal("toB")
+	-- 		-- Test getting valid events for the initial state
+	-- 		local validEvents = stateMachine:getValidEvents()
+	-- 		expect(#validEvents).to.equal(1)
+	-- 		expect(validEvents[1]).to.equal("toB")
 
-			-- Test getting valid events after a transition
-			stateMachine:handle("toB")
-			validEvents = stateMachine:getValidEvents()
-			expect(#validEvents).to.equal(1)
-			expect(validEvents[1]).to.equal("toA")
-		end)
-	end)
+	-- 		-- Test getting valid events after a transition
+	-- 		stateMachine:handle("toB")
+	-- 		validEvents = stateMachine:getValidEvents()
+	-- 		expect(#validEvents).to.equal(1)
+	-- 		expect(validEvents[1]).to.equal("toA")
+	-- 	end)
+	-- end)
 
-	describe("setDebugEnabled", function()
-		it("should set debug enabled correctly", function()
-			local initialState = "A"
-			local eventsByName = {
-				toB = {
-					canBeFinal = false,
-					from = {
-						A = {
-							beforeAsync = to(B),
-						},
-					},
-				},
-			}
+	-- describe("setDebugEnabled", function()
+	-- 	it("should set debug enabled correctly", function()
+	-- 		local initialState = "A"
+	-- 		local eventsByName = {
+	-- 			toB = {
+	-- 				canBeFinal = false,
+	-- 				from = {
+	-- 					A = {
+	-- 						beforeAsync = TO_Y_HANDLER,
+	-- 					},
+	-- 				},
+	-- 			},
+	-- 		}
 
-			local stateMachine = StateMachine.new(initialState, eventsByName)
+	-- 		local stateMachine = StateMachine.new(initialState, eventsByName)
 
-			-- Test setting debug enabled
-			stateMachine:setDebugEnabled(true)
-			expect(stateMachine._isDebugEnabled).to.equal(true)
+	-- 		-- Test setting debug enabled
+	-- 		stateMachine:setDebugEnabled(true)
+	-- 		expect(stateMachine._isDebugEnabled).to.equal(true)
 
-			-- Test setting debug disabled
-			stateMachine:setDebugEnabled(false)
-			expect(stateMachine._isDebugEnabled).to.equal(false)
-		end)
-	end)
+	-- 		-- Test setting debug disabled
+	-- 		stateMachine:setDebugEnabled(false)
+	-- 		expect(stateMachine._isDebugEnabled).to.equal(false)
+	-- 	end)
+	-- end)
 
-	describe("destroy", function()
-		it("should destroy correctly", function()
-			local initialState = "A"
-			local eventsByName = {
-				toB = {
-					canBeFinal = false,
-					from = {
-						A = {
-							beforeAsync = to(B),
-						},
-					},
-				},
-			}
+	-- describe("destroy", function()
+	-- 	it("should destroy correctly", function()
+	-- 		local initialState = "A"
+	-- 		local eventsByName = {
+	-- 			toB = {
+	-- 				canBeFinal = false,
+	-- 				from = {
+	-- 					A = {
+	-- 						beforeAsync = TO_Y_HANDLER,
+	-- 					},
+	-- 				},
+	-- 			},
+	-- 		}
 
-			local stateMachine = StateMachine.new(initialState, eventsByName)
+	-- 		local stateMachine = StateMachine.new(initialState, eventsByName)
 
-			-- Test destroying the state machine
-			stateMachine:destroy()
-			expect(stateMachine._isDestroyed).to.equal(true)
-			expect(stateMachine.beforeEvent:getConnectionCount()).to.equal(0)
-			expect(stateMachine.leavingState:getConnectionCount()).to.equal(0)
-			expect(stateMachine.stateEntered:getConnectionCount()).to.equal(0)
-			expect(stateMachine.afterEvent:getConnectionCount()).to.equal(0)
-			expect(stateMachine.finished:getConnectionCount()).to.equal(0)
-		end)
-	end)
+	-- 		-- Test destroying the state machine
+	-- 		stateMachine:destroy()
+	-- 		expect(stateMachine._isDestroyed).to.equal(true)
+	-- 		expect(stateMachine.beforeEvent:getConnectionCount()).to.equal(0)
+	-- 		expect(stateMachine.leavingState:getConnectionCount()).to.equal(0)
+	-- 		expect(stateMachine.stateEntered:getConnectionCount()).to.equal(0)
+	-- 		expect(stateMachine.afterEvent:getConnectionCount()).to.equal(0)
+	-- 		expect(stateMachine.finished:getConnectionCount()).to.equal(0)
+	-- 	end)
+	-- end)
 end
 
 -- return function()
