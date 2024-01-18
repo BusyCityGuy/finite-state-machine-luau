@@ -207,11 +207,6 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TestService = game:GetService("TestService")
 
-local Freeze = require(TestService.Source.freeze)
-
--- Shortening things is generally bad practice, but this greatly improves readability of tests
-local Dict = Freeze.Dictionary
-
 -- States
 local X_STATE = "X_STATE"
 local Y_STATE = "Y_STATE"
@@ -231,16 +226,20 @@ local TO_Y_HANDLER = to(Y_STATE)
 
 return function()
 	local StateMachine = require(ReplicatedStorage.Source.StateMachine)
+	local Freeze = require(TestService.Source.freeze)
+
+	-- Shortening things is generally bad practice, but this greatly improves readability of tests
+	local Dict = Freeze.Dictionary
 
 	describe("new", function()
 		it("should return a new state machine", function()
 			local initialState = X_STATE
 			local eventsByName = {
-				[TO_Y_EVENT] = {
-					canBeFinal = false,
+				[TO_X_EVENT] = {
+					canBeFinal = true,
 					from = {
 						[X_STATE] = {
-							beforeAsync = TO_Y_HANDLER,
+							beforeAsync = TO_X_HANDLER,
 						},
 					},
 				},
@@ -259,11 +258,11 @@ return function()
 		it("should set initial state", function()
 			local initialState = X_STATE
 			local eventsByName = {
-				[TO_Y_EVENT] = {
-					canBeFinal = false,
+				[TO_X_EVENT] = {
+					canBeFinal = true,
 					from = {
 						[X_STATE] = {
-							beforeAsync = TO_Y_HANDLER,
+							beforeAsync = TO_X_HANDLER,
 						},
 					},
 				},
@@ -437,31 +436,44 @@ return function()
 	-- 	end)
 	-- end)
 
-	-- describe("setDebugEnabled", function()
-	-- 	it("should set debug enabled correctly", function()
-	-- 		local initialState = "A"
-	-- 		local eventsByName = {
-	-- 			toB = {
-	-- 				canBeFinal = false,
-	-- 				from = {
-	-- 					A = {
-	-- 						beforeAsync = TO_Y_HANDLER,
-	-- 					},
-	-- 				},
-	-- 			},
-	-- 		}
+	describe("debugEnabled", function()
+		it("should default to false", function()
+			local eventsByName = {
+				[TO_X_EVENT] = {
+					canBeFinal = true,
+					from = {
+						[X_STATE] = {
+							beforeAsync = TO_X_HANDLER,
+						},
+					},
+				},
+			}
 
-	-- 		local stateMachine = StateMachine.new(initialState, eventsByName)
+			local stateMachine = StateMachine.new(X_STATE, eventsByName)
+			expect(stateMachine._isDebugEnabled).to.equal(false)
+		end)
 
-	-- 		-- Test setting debug enabled
-	-- 		stateMachine:setDebugEnabled(true)
-	-- 		expect(stateMachine._isDebugEnabled).to.equal(true)
+		it("setter should set the value correctly", function()
+			local eventsByName = {
+				[TO_X_EVENT] = {
+					canBeFinal = true,
+					from = {
+						[X_STATE] = {
+							beforeAsync = TO_X_HANDLER,
+						},
+					},
+				},
+			}
 
-	-- 		-- Test setting debug disabled
-	-- 		stateMachine:setDebugEnabled(false)
-	-- 		expect(stateMachine._isDebugEnabled).to.equal(false)
-	-- 	end)
-	-- end)
+			local stateMachine = StateMachine.new(X_STATE, eventsByName)
+
+			stateMachine:setDebugEnabled(true)
+			expect(stateMachine._isDebugEnabled).to.equal(true)
+
+			stateMachine:setDebugEnabled(false)
+			expect(stateMachine._isDebugEnabled).to.equal(false)
+		end)
+	end)
 
 	-- describe("destroy", function()
 	-- 	it("should destroy correctly", function()
