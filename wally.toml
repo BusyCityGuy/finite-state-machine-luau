@@ -1,0 +1,15 @@
+[package]
+name = "busycityguy/finite-state-machine-luau"
+description = "A feature rich and fully typed implementation of a Finite State Machine in Luau, developed for use in Roblox experiences"
+version = "0.1.0"
+license = "MIT"
+authors = ["BusyCityGuy"]
+realm = "shared"
+registry = "https://github.com/UpliftGames/wally-index"
+
+[dev-dependencies]
+TestEZ = "roblox/testez@0.4.1"
+Freeze = "duckarmor/freeze@0.1.4"
+
+# TODO: Switch from TestEZ to Jest when it's made ready by OSS community
+# Jest = "jsdotlua/jest@3.4.1"

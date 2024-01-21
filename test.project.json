@@ -6,7 +6,10 @@
 		"ReplicatedStorage": {
 			"$className": "ReplicatedStorage",
 			"Source": {
-				"$path": "src"
+				"$className": "Folder",
+				"StateMachine": {
+					"$path": "src/StateMachine"
+				}
 			}
 		},
 		"TestService": {
@@ -16,7 +19,11 @@
 			},
 			"Source": {
 				"$className": "Folder",
-				"$path": "test-runner"
+				"$path": "src/TestService/Source"
+			},
+			"Dependencies": {
+				"$className": "Folder",
+				"$path": "DevPackages"
 			}
 		}
 	}
