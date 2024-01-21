@@ -243,7 +243,7 @@ local FINISH_HANDLER = to(FINISH_STATE)
 
 return function()
 	local StateMachine = require(ReplicatedStorage.Source.StateMachine)
-	local Freeze = require(TestService.Source.freeze)
+	local Freeze = require(TestService.Dependencies.Freeze)
 
 	-- Shortening things is generally bad practice, but this greatly improves readability of tests
 	local Dict = Freeze.Dictionary
