@@ -733,6 +733,79 @@ return function()
 				expect(stateMachine._currentState).to.equal(expectedAfterState)
 			end)
 		end)
+
+		it("should queue and process async events in FIFO order", function()
+			local initialState = X_STATE
+			local timeout = 0.5
+			local mainThread = coroutine.running()
+			local orderedHandledEvents = {
+				TO_Y_EVENT,
+				TO_X_EVENT,
+				FINISH_EVENT,
+			}
+			local actualHandledEvents = {}
+			local eventsByName = {
+				[TO_Y_EVENT] = {
+					canBeFinal = false,
+					from = {
+						[X_STATE] = {
+							beforeAsync = TO_Y_HANDLER,
+							afterAsync = function()
+								table.insert(actualHandledEvents, TO_Y_EVENT)
+								task.wait()
+							end,
+						},
+					},
+				},
+				[TO_X_EVENT] = {
+					canBeFinal = false,
+					from = {
+						[Y_STATE] = {
+							beforeAsync = TO_X_HANDLER,
+							afterAsync = function()
+								table.insert(actualHandledEvents, TO_X_EVENT)
+								task.wait()
+							end,
+						},
+					},
+				},
+				[FINISH_EVENT] = {
+					canBeFinal = true,
+					from = {
+						[X_STATE] = {
+							beforeAsync = FINISH_HANDLER,
+							afterAsync = function()
+								table.insert(actualHandledEvents, FINISH_EVENT)
+								task.wait()
+							end,
+						},
+					},
+				},
+			}
+
+			local stateMachine = StateMachine.new(initialState, eventsByName)
+
+			-- Queue events
+			for _, handledEventName in ipairs(orderedHandledEvents) do
+				stateMachine:handle(handledEventName)
+			end
+
+			local timeoutThread = task.delay(timeout, function()
+				coroutine.resume(mainThread, `timeout waiting {timeout} seconds for finished signal`)
+			end)
+
+			stateMachine[FINISHED_SIGNAL]:Connect(function()
+				task.cancel(timeoutThread)
+				coroutine.resume(mainThread, FINISHED_SIGNAL)
+			end)
+
+			local invokedCallback = coroutine.yield(mainThread)
+			expect(invokedCallback).to.equal(FINISHED_SIGNAL)
+			for index, expectedHandledEventName in orderedHandledEvents do
+				expect(actualHandledEvents[index]).to.equal(expectedHandledEventName)
+			end
+			expect(#actualHandledEvents).to.equal(#orderedHandledEvents)
+		end)
 	end)
 
 	-- Placeholder
