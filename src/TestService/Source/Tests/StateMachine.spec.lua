@@ -431,6 +431,38 @@ return function()
 
 	-- Done
 	describe("handle", function()
+		it("should error given a bad event name", function()
+			local nonexistentEventName = "nonexistent"
+			local eventsByName = {
+				[TO_X_EVENT] = {
+					canBeFinal = true,
+					from = {
+						[X_STATE] = {
+							beforeAsync = TO_X_HANDLER,
+						},
+					},
+				},
+			}
+
+			local stateMachine = StateMachine.new(X_STATE, eventsByName)
+
+			local badTypes = {
+				1,
+				true,
+				nil,
+				{},
+			}
+
+			for _, badType in badTypes do
+				expect(function()
+					stateMachine:handle(badType)
+				end).to.throw(`string expected, got {typeof(badType)}`)
+			end
+
+			expect(function()
+				stateMachine:handle(nonexistentEventName)
+			end).to.throw(`Invalid event name passed to handle: {nonexistentEventName}`)
+		end)
 		describe("should fire signals", function()
 			it("in the correct order", function()
 				local initialState = X_STATE
@@ -887,29 +919,29 @@ return function()
 			end
 			expect(#actualHandledEvents).to.equal(#orderedHandledEvents)
 		end)
-	end)
 
-	it("should error if called after the machine finished", function()
-		local eventsByName = {
-			[FINISH_EVENT] = {
-				canBeFinal = true,
-				from = {
-					[X_STATE] = {
-						beforeAsync = FINISH_HANDLER,
+		it("should error if called after the machine finished", function()
+			local eventsByName = {
+				[FINISH_EVENT] = {
+					canBeFinal = true,
+					from = {
+						[X_STATE] = {
+							beforeAsync = FINISH_HANDLER,
+						},
 					},
 				},
-			},
-		}
+			}
 
-		local stateMachine = StateMachine.new(X_STATE, eventsByName)
+			local stateMachine = StateMachine.new(X_STATE, eventsByName)
 
-		stateMachine:handle(FINISH_EVENT)
-		stateMachine.finished:Wait()
-		expect(stateMachine._currentState).to.equal(FINISH_STATE)
-		expect(function()
-			-- FIXME: the coroutine.wrap means this thread doesn't error, so this test fails
 			stateMachine:handle(FINISH_EVENT)
-		end).to.throw()
+			stateMachine.finished:Wait()
+			expect(stateMachine._currentState).to.equal(FINISH_STATE)
+			expect(function()
+				-- FIXME: the coroutine.wrap means this thread doesn't error, so this test fails
+				stateMachine:handle(FINISH_EVENT)
+			end).to.throw()
+		end)
 	end)
 
 	-- Placeholder
@@ -996,25 +1028,55 @@ return function()
 			expect(stateMachine._isDebugEnabled).to.equal(false)
 		end)
 
-		it("setter should set the value correctly", function()
-			local eventsByName = {
-				[TO_X_EVENT] = {
-					canBeFinal = true,
-					from = {
-						[X_STATE] = {
-							beforeAsync = TO_X_HANDLER,
+		describe("setter", function()
+			it("should error given a bad type", function()
+				local eventsByName = {
+					[TO_X_EVENT] = {
+						canBeFinal = true,
+						from = {
+							[X_STATE] = {
+								beforeAsync = TO_X_HANDLER,
+							},
 						},
 					},
-				},
-			}
+				}
 
-			local stateMachine = StateMachine.new(X_STATE, eventsByName)
+				local stateMachine = StateMachine.new(X_STATE, eventsByName)
 
-			stateMachine:setDebugEnabled(true)
-			expect(stateMachine._isDebugEnabled).to.equal(true)
+				local badTypes = {
+					1,
+					"bad",
+					nil,
+					{},
+				}
 
-			stateMachine:setDebugEnabled(false)
-			expect(stateMachine._isDebugEnabled).to.equal(false)
+				for _, badType in badTypes do
+					expect(function()
+						stateMachine:setDebugEnabled(badType)
+					end).to.throw(`boolean expected, got {typeof(badType)}`)
+				end
+			end)
+
+			it("should set the value correctly", function()
+				local eventsByName = {
+					[TO_X_EVENT] = {
+						canBeFinal = true,
+						from = {
+							[X_STATE] = {
+								beforeAsync = TO_X_HANDLER,
+							},
+						},
+					},
+				}
+
+				local stateMachine = StateMachine.new(X_STATE, eventsByName)
+
+				stateMachine:setDebugEnabled(true)
+				expect(stateMachine._isDebugEnabled).to.equal(true)
+
+				stateMachine:setDebugEnabled(false)
+				expect(stateMachine._isDebugEnabled).to.equal(false)
+			end)
 		end)
 	end)
 
