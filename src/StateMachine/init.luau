@@ -192,9 +192,7 @@ function StateMachine._createEventHandlers(self: ClassType, eventsByName: { [Eve
 	for eventName, event in pairs(eventsByName) do
 		self._handlersByEventName[eventName] = function(...: any?)
 			local success, errorMessage = self:_queueEventAsync(eventName, event, ...)
-			if not success then
-				error(`Failed to queue event {eventName}: {errorMessage}`)
-			end
+			assert(success, `Failed to queue event {eventName}: {errorMessage}`)
 		end
 
 		for state, _ in pairs(event.from) do

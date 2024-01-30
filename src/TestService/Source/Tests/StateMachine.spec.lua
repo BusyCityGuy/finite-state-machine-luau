@@ -254,6 +254,29 @@ return function()
 
 	-- Done
 	describe("new", function()
+		it("should error if missing initial state", function()
+			local eventsByName = {
+				[TO_X_EVENT] = {
+					canBeFinal = true,
+					from = {
+						[X_STATE] = {
+							beforeAsync = TO_X_HANDLER,
+						},
+					},
+				},
+			}
+
+			expect(function()
+				StateMachine.new(nil, eventsByName)
+			end).to.throw("Missing initial state to new state machine")
+		end)
+
+		it("should error if missing events", function()
+			expect(function()
+				StateMachine.new(X_STATE, nil)
+			end).to.throw("Missing events to new state machine")
+		end)
+
 		it("should return a new state machine", function()
 			local initialState = X_STATE
 			local eventsByName = {
@@ -412,9 +435,11 @@ return function()
 					coroutine.resume(mainThread, true)
 				end)
 
+				local signalConnections = {}
+
 				-- Set up event connections
 				for _, signalName in ORDERED_SIGNALS do
-					stateMachine[signalName]:Connect(function(_, _)
+					local signalConnection = stateMachine[signalName]:Connect(function(_, _)
 						if coroutine.status(timeoutThread) ~= "suspended" then
 							return
 						end
@@ -425,13 +450,21 @@ return function()
 							coroutine.resume(mainThread, false)
 						end
 					end)
+
+					table.insert(signalConnections, signalConnection)
 				end
 
 				local didTimeOut = coroutine.yield(mainThread)
+				for _, signalConnection in signalConnections do
+					signalConnection:Disconnect()
+				end
+
 				if didTimeOut then
 					local numSignalsNotFired = #ORDERED_SIGNALS - #resultSignalOrder
 					warn(
-						`Timed out waiting for {numSignalsNotFired} signal{plural(numSignalsNotFired)} to fire after {timeout} seconds {debug.traceback()}`
+						debug.traceback(
+							`Timed out waiting for {numSignalsNotFired} signal{plural(numSignalsNotFired)} to fire after {timeout} seconds`
+						)
 					)
 				end
 
@@ -445,7 +478,6 @@ return function()
 				local variadicArgs = { "test", false, nil, 3.5 }
 				local timeout = 0.5
 				local handledEventName = TO_Y_EVENT
-				local expectedAfterState = Y_STATE
 				local receivedParameters
 				local eventsByName = {
 					[TO_Y_EVENT] = {
@@ -487,7 +519,7 @@ return function()
 						coroutine.resume(mainThread, true)
 					end)
 
-					stateMachine[BEFORE_EVENT_SIGNAL]:Connect(function(...)
+					local signalConnection = stateMachine[BEFORE_EVENT_SIGNAL]:Connect(function(...)
 						receivedParameters = { ... }
 						task.cancel(timeoutThread)
 						coroutine.resume(mainThread, false)
@@ -496,6 +528,7 @@ return function()
 					stateMachine:handle(handledEventName, table.unpack(variadicArgs))
 
 					local didTimeOut = coroutine.yield(mainThread)
+					signalConnection:Disconnect()
 					expect(didTimeOut).to.equal(false)
 					expect(#receivedParameters).to.equal(2)
 					expect(receivedParameters[1]).to.equal(handledEventName)
@@ -510,7 +543,7 @@ return function()
 						coroutine.resume(mainThread, true)
 					end)
 
-					stateMachine[LEAVING_STATE_SIGNAL]:Connect(function(...)
+					local signalConnection = stateMachine[LEAVING_STATE_SIGNAL]:Connect(function(...)
 						receivedParameters = { ... }
 						task.cancel(timeoutThread)
 						coroutine.resume(mainThread, false)
@@ -519,6 +552,7 @@ return function()
 					stateMachine:handle(handledEventName, table.unpack(variadicArgs))
 
 					local didTimeOut = coroutine.yield(mainThread)
+					signalConnection:Disconnect()
 					expect(didTimeOut).to.equal(false)
 					expect(#receivedParameters).to.equal(2)
 					expect(receivedParameters[1]).to.equal(initialState)
@@ -533,7 +567,7 @@ return function()
 						coroutine.resume(mainThread, true)
 					end)
 
-					stateMachine[STATE_ENTERED_SIGNAL]:Connect(function(...)
+					local signalConnection = stateMachine[STATE_ENTERED_SIGNAL]:Connect(function(...)
 						receivedParameters = { ... }
 						task.cancel(timeoutThread)
 						coroutine.resume(mainThread, false)
@@ -542,6 +576,7 @@ return function()
 					stateMachine:handle(handledEventName, table.unpack(variadicArgs))
 
 					local didTimeOut = coroutine.yield(mainThread)
+					signalConnection:Disconnect()
 					expect(didTimeOut).to.equal(false)
 					expect(#receivedParameters).to.equal(2)
 					expect(receivedParameters[1]).to.equal(expectedAfterState)
@@ -556,7 +591,7 @@ return function()
 						coroutine.resume(mainThread, true)
 					end)
 
-					stateMachine[AFTER_EVENT_SIGNAL]:Connect(function(...)
+					local signalConnection = stateMachine[AFTER_EVENT_SIGNAL]:Connect(function(...)
 						receivedParameters = { ... }
 						task.cancel(timeoutThread)
 						coroutine.resume(mainThread, false)
@@ -565,6 +600,7 @@ return function()
 					stateMachine:handle(handledEventName, table.unpack(variadicArgs))
 
 					local didTimeOut = coroutine.yield(mainThread)
+					signalConnection:Disconnect()
 					expect(didTimeOut).to.equal(false)
 					expect(#receivedParameters).to.equal(3)
 					expect(receivedParameters[1]).to.equal(handledEventName)
@@ -579,7 +615,7 @@ return function()
 						coroutine.resume(mainThread, true)
 					end)
 
-					stateMachine[FINISHED_SIGNAL]:Connect(function(...)
+					local signalConnection = stateMachine[FINISHED_SIGNAL]:Connect(function(...)
 						receivedParameters = { ... }
 						task.cancel(timeoutThread)
 						coroutine.resume(mainThread, false)
@@ -588,6 +624,7 @@ return function()
 					stateMachine:handle(FINISH_EVENT, table.unpack(variadicArgs))
 
 					local didTimeOut = coroutine.yield(mainThread)
+					signalConnection:Disconnect()
 					expect(didTimeOut).to.equal(false)
 					expect(#receivedParameters).to.equal(1)
 					expect(receivedParameters[1]).to.equal(initialState)
@@ -622,31 +659,50 @@ return function()
 				}
 
 				local stateMachine = StateMachine.new(initialState, eventsByName)
+				local signalConnections = {}
 
 				stateMachine:handle(FINISH_EVENT)
 
-				stateMachine[BEFORE_EVENT_SIGNAL]:Connect(function()
-					table.insert(firedSignals, BEFORE_EVENT_SIGNAL)
-				end)
+				table.insert(
+					signalConnections,
+					stateMachine[BEFORE_EVENT_SIGNAL]:Connect(function()
+						table.insert(firedSignals, BEFORE_EVENT_SIGNAL)
+					end)
+				)
 
-				stateMachine[LEAVING_STATE_SIGNAL]:Connect(function()
-					table.insert(firedSignals, LEAVING_STATE_SIGNAL)
-				end)
+				table.insert(
+					signalConnections,
+					stateMachine[LEAVING_STATE_SIGNAL]:Connect(function()
+						table.insert(firedSignals, LEAVING_STATE_SIGNAL)
+					end)
+				)
 
-				stateMachine[STATE_ENTERED_SIGNAL]:Connect(function()
-					table.insert(firedSignals, STATE_ENTERED_SIGNAL)
-				end)
+				table.insert(
+					signalConnections,
+					stateMachine[STATE_ENTERED_SIGNAL]:Connect(function()
+						table.insert(firedSignals, STATE_ENTERED_SIGNAL)
+					end)
+				)
 
-				stateMachine[AFTER_EVENT_SIGNAL]:Connect(function()
-					table.insert(firedSignals, AFTER_EVENT_SIGNAL)
-				end)
+				table.insert(
+					signalConnections,
+					stateMachine[AFTER_EVENT_SIGNAL]:Connect(function()
+						table.insert(firedSignals, AFTER_EVENT_SIGNAL)
+					end)
+				)
 
-				stateMachine[FINISHED_SIGNAL]:Connect(function()
-					table.insert(firedSignals, FINISHED_SIGNAL)
-				end)
+				table.insert(
+					signalConnections,
+					stateMachine[FINISHED_SIGNAL]:Connect(function()
+						table.insert(firedSignals, FINISHED_SIGNAL)
+					end)
+				)
 
 				local timeout = 0.5
 				timeoutThreadBefore = task.delay(timeout, function()
+					for _, signalConnection in signalConnections do
+						signalConnection:Disconnect()
+					end
 					coroutine.resume(mainThread, `timeout waiting {timeout} seconds for beforeAsync invocation`)
 				end)
 				local invokedCallback = coroutine.yield()
@@ -659,6 +715,9 @@ return function()
 					coroutine.resume(mainThread, `timeout waiting {timeout} seconds for afterAsync invocation`)
 				end)
 				invokedCallback = coroutine.yield()
+				for _, signalConnection in signalConnections do
+					signalConnection:Disconnect()
+				end
 				expect(invokedCallback).to.equal("afterAsync")
 				expectedFiredSignals = {
 					BEFORE_EVENT_SIGNAL,
@@ -794,18 +853,42 @@ return function()
 				coroutine.resume(mainThread, `timeout waiting {timeout} seconds for finished signal`)
 			end)
 
-			stateMachine[FINISHED_SIGNAL]:Connect(function()
+			local signalConnection = stateMachine[FINISHED_SIGNAL]:Connect(function()
 				task.cancel(timeoutThread)
 				coroutine.resume(mainThread, FINISHED_SIGNAL)
 			end)
 
 			local invokedCallback = coroutine.yield(mainThread)
+			signalConnection:Disconnect()
 			expect(invokedCallback).to.equal(FINISHED_SIGNAL)
 			for index, expectedHandledEventName in orderedHandledEvents do
 				expect(actualHandledEvents[index]).to.equal(expectedHandledEventName)
 			end
 			expect(#actualHandledEvents).to.equal(#orderedHandledEvents)
 		end)
+	end)
+
+	it("should error if called after the machine finished", function()
+		local eventsByName = {
+			[FINISH_EVENT] = {
+				canBeFinal = true,
+				from = {
+					[X_STATE] = {
+						beforeAsync = FINISH_HANDLER,
+					},
+				},
+			},
+		}
+
+		local stateMachine = StateMachine.new(X_STATE, eventsByName)
+
+		stateMachine:handle(FINISH_EVENT)
+		stateMachine.finished:Wait()
+		expect(stateMachine._currentState).to.equal(FINISH_STATE)
+		expect(function()
+			-- FIXME: the coroutine.wrap means this thread doesn't error, so this test fails
+			stateMachine:handle(FINISH_EVENT)
+		end).to.throw()
 	end)
 
 	-- Placeholder
