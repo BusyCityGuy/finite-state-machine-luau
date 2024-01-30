@@ -254,7 +254,7 @@ return function()
 
 	-- Done
 	describe("new", function()
-		it("should error if missing initial state", function()
+		it("should error given bad initial state type", function()
 			local eventsByName = {
 				[TO_X_EVENT] = {
 					canBeFinal = true,
@@ -266,15 +266,36 @@ return function()
 				},
 			}
 
-			expect(function()
-				StateMachine.new(nil, eventsByName)
-			end).to.throw("Missing initial state to new state machine")
+			local badTypes = {
+				1,
+				true,
+				nil,
+				{},
+			}
+
+			for _, badType in badTypes do
+				expect(function()
+					StateMachine.new(badType, eventsByName)
+				end).to.throw("Bad tuple index #1")
+			end
 		end)
 
-		it("should error if missing events", function()
-			expect(function()
-				StateMachine.new(X_STATE, nil)
-			end).to.throw("Missing events to new state machine")
+		it("should error given bad events type", function()
+			local badTypes = {
+				1,
+				true,
+				nil,
+				{
+					"bad",
+					"type",
+				},
+			}
+
+			for _, badType in badTypes do
+				expect(function()
+					StateMachine.new(X_STATE, badType)
+				end).to.throw("Bad tuple index #2")
+			end
 		end)
 
 		it("should return a new state machine", function()

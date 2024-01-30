@@ -108,12 +108,16 @@
 			light:handle(Event.SwitchOn) -- warns "Illegal event `SwitchOn` called during state `On`" with a stack trace
 --]]
 
-local Signal = require(script.Dependencies.Signal)
-local ThreadQueue = require(script.Dependencies.ThreadQueue)
+local Signal = require(script.Modules.Signal)
+local ThreadQueue = require(script.Modules.ThreadQueue)
+local t = require(script.Dependencies.t)
 
 -- These types are added for readability to disambiguate what the string is meant to represent in types
 type State = string
+local State = t.string
+
 type EventName = string
+local EventName = t.string
 
 -- Transitions are sets of functions that handle Events based on the Machine's current state.
 -- First, the `before` callback executes which returns the next State to transition to, or `nil` if the machine is meant to finish.
@@ -123,6 +127,10 @@ export type Transition = {
 	beforeAsync: (...any) -> State?,
 	afterAsync: ((...any) -> ())?,
 }
+local Transition = t.strictInterface({
+	beforeAsync = t.callback,
+	afterAsync = t.optional(t.callback),
+})
 
 -- Events choose which Transition to trigger based on the Machine's current State.
 -- canBeFinal should only be true if the Transition is allowed to return nil to finish the machine.
@@ -133,6 +141,10 @@ export type Event = {
 		[State]: Transition,
 	},
 }
+local Event = t.strictInterface({
+	canBeFinal = t.boolean,
+	from = t.map(State, Transition),
+})
 
 -- EventHandlers fire signals and call transition callbacks as outlined in the header comment
 type EventHandler = (...any) -> ()
@@ -160,9 +172,9 @@ export type ClassType = typeof(setmetatable(
 	StateMachine
 ))
 
+local newCheck = t.strict(t.tuple(State, t.map(EventName, Event)))
 function StateMachine.new(initialState: State, eventsByName: { [EventName]: Event }): ClassType
-	assert(initialState, "Missing initial state to new state machine")
-	assert(eventsByName, "Missing events to new state machine")
+	newCheck(initialState, eventsByName)
 
 	local self = {
 		-- Public events
@@ -188,7 +200,12 @@ function StateMachine.new(initialState: State, eventsByName: { [EventName]: Even
 	return self
 end
 
+local createEventHandlersCheck = t.strictInterface({
+	[EventName] = Event,
+})
 function StateMachine._createEventHandlers(self: ClassType, eventsByName: { [EventName]: Event })
+	createEventHandlersCheck(eventsByName)
+
 	for eventName, event in pairs(eventsByName) do
 		self._handlersByEventName[eventName] = function(...: any?)
 			local success, errorMessage = self:_queueEventAsync(eventName, event, ...)
@@ -202,7 +219,11 @@ function StateMachine._createEventHandlers(self: ClassType, eventsByName: { [Eve
 	end
 end
 
+local checkAfterState = t.strict(t.optional(State))
+local queueEventAsyncCheck = t.strict(t.tuple(EventName, Event))
 function StateMachine._queueEventAsync(self: ClassType, eventName: EventName, event: Event, ...: any?)
+	queueEventAsyncCheck(eventName, event)
+
 	local args = { ... }
 
 	local success, errorMessage = self._eventQueue:submitAsync(function()
@@ -221,6 +242,8 @@ function StateMachine._queueEventAsync(self: ClassType, eventName: EventName, ev
 		if self._isDestroyed then
 			return
 		end
+
+		checkAfterState(afterState)
 
 		self:_log(`Transitioning from {beforeState} to {afterState}`)
 
@@ -257,7 +280,9 @@ function StateMachine._queueEventAsync(self: ClassType, eventName: EventName, ev
 end
 
 -- VarArgs get passed to the transition callbacks
+local handleCheck = t.strict(EventName)
 function StateMachine.handle(self: ClassType, eventName: EventName, ...: any?)
+	handleCheck(eventName)
 	assert(not self._isDestroyed, `Attempt to handle event {eventName} after the state machine was destroyed`)
 
 	local handleEvent = self._handlersByEventName[eventName] :: EventHandler?
@@ -275,7 +300,9 @@ function StateMachine.getValidEvents(self: ClassType)
 	return self._currentState and self._validEventNamesByState[self._currentState] or {}
 end
 
+local setDebugEnabledCheck = t.strict(t.boolean)
 function StateMachine.setDebugEnabled(self: ClassType, isEnabled: boolean)
+	setDebugEnabledCheck(isEnabled)
 	self._isDebugEnabled = isEnabled
 end
 
