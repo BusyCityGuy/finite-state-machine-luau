@@ -5,12 +5,17 @@ registry = "test"
 [[package]]
 name = "busycityguy/finite-state-machine-luau"
 version = "0.1.0"
-dependencies = [["Freeze", "duckarmor/freeze@0.1.4"], ["TestEZ", "roblox/testez@0.4.1"]]
+dependencies = [["t", "osyrisrblx/t@3.0.0"], ["Freeze", "duckarmor/freeze@0.1.4"], ["TestEZ", "roblox/testez@0.4.1"]]
 
 [[package]]
 name = "duckarmor/freeze"
 version = "0.1.4"
 dependencies = [["TestEZ", "roblox/testez@0.4.1"]]
+
+[[package]]
+name = "osyrisrblx/t"
+version = "3.0.0"
+dependencies = []
 
 [[package]]
 name = "roblox/testez"

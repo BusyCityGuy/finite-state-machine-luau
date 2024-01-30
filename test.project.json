@@ -8,7 +8,10 @@
 			"Source": {
 				"$className": "Folder",
 				"StateMachine": {
-					"$path": "src/StateMachine"
+					"$path": "src/StateMachine",
+					"Dependencies": {
+						"$path": "Packages"
+					}
 				}
 			}
 		},

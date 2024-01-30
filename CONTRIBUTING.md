@@ -35,15 +35,21 @@ The following tools are installed by Aftman:
 
 ## Install packages
 
-This project only depends on packages for running tests during development. These dev packages are installed by Wally by running the following command:
+This project depends on packages to run and for testing. These packages are installed by Wally by running the following command:
 
 ```
 wally install
 ```
 
-This will create a `DevPackages` folder in the top level of the directory that is referenced by the `test.project.json` file.
+This will create `Packages` and `DevPackages` folders in the top level of the directory that are referenced by the `*.project.json` files.
 
 ### Packages in use
+
+The following package is installed as a production dependency:
+
+| Package                         | Description                                                                                                                                                                                                                                                                     |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **t** for runtime type checking | This project uses [t](https://github.com/osyrisrblx/t) to check parameter types at runtime. This helps quickly catch incorrect usage errors by providing specific error messages about incorrect parameter types instead of cascading into a potentially confusing error later. |
 
 The following packages are installed as dev dependencies:
 
