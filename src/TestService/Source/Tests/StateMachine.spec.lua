@@ -933,14 +933,39 @@ return function()
 			}
 
 			local stateMachine = StateMachine.new(X_STATE, eventsByName)
+			local mainThread = coroutine.running()
+			local logger = stateMachine:getLogger()
+
+			local timeout = 0.5
+			local timeoutMessage = `timeout waiting {timeout} seconds for finished or error message`
+			local timeoutThread = task.delay(timeout, function()
+				coroutine.resume(mainThread, timeoutMessage)
+			end)
 
 			stateMachine:handle(FINISH_EVENT)
 			stateMachine.finished:Wait()
 			expect(stateMachine._currentState).to.equal(FINISH_STATE)
-			expect(function()
-				-- FIXME: the coroutine.wrap means this thread doesn't error, so this test fails
-				stateMachine:handle(FINISH_EVENT)
-			end).to.throw()
+
+			logger:addHandler(logger.LogLevel.Error, function(level: logger.LogLevel, name: string, message: string)
+				if level ~= logger.LogLevel.Error then
+					return
+				end
+
+				if coroutine.status(timeoutThread) ~= "suspended" then
+					return
+				end
+
+				task.cancel(timeoutThread)
+				coroutine.resume(mainThread, message)
+				return logger.HandlerResult.Sink
+			end)
+
+			stateMachine:handle(FINISH_EVENT)
+			local errorMessage = coroutine.yield()
+			expect(errorMessage).never.to.equal(timeoutMessage)
+			expect(
+				errorMessage:find(`Attempt to process event {FINISH_EVENT} after the state machine already finished`)
+			).to.be.ok()
 		end)
 	end)
 
@@ -1011,74 +1036,74 @@ return function()
 	-- end)
 
 	-- Done
-	describe("_isDebugEnabled", function()
-		it("should default to false", function()
-			local eventsByName = {
-				[TO_X_EVENT] = {
-					canBeFinal = true,
-					from = {
-						[X_STATE] = {
-							beforeAsync = TO_X_HANDLER,
-						},
-					},
-				},
-			}
+	-- describe("_isDebugEnabled", function()
+	-- 	it("should default to false", function()
+	-- 		local eventsByName = {
+	-- 			[TO_X_EVENT] = {
+	-- 				canBeFinal = true,
+	-- 				from = {
+	-- 					[X_STATE] = {
+	-- 						beforeAsync = TO_X_HANDLER,
+	-- 					},
+	-- 				},
+	-- 			},
+	-- 		}
 
-			local stateMachine = StateMachine.new(X_STATE, eventsByName)
-			expect(stateMachine._isDebugEnabled).to.equal(false)
-		end)
+	-- 		local stateMachine = StateMachine.new(X_STATE, eventsByName)
+	-- 		expect(stateMachine._isDebugEnabled).to.equal(false)
+	-- 	end)
 
-		describe("setter", function()
-			it("should error given a bad type", function()
-				local eventsByName = {
-					[TO_X_EVENT] = {
-						canBeFinal = true,
-						from = {
-							[X_STATE] = {
-								beforeAsync = TO_X_HANDLER,
-							},
-						},
-					},
-				}
+	-- 	describe("setter", function()
+	-- 		it("should error given a bad type", function()
+	-- 			local eventsByName = {
+	-- 				[TO_X_EVENT] = {
+	-- 					canBeFinal = true,
+	-- 					from = {
+	-- 						[X_STATE] = {
+	-- 							beforeAsync = TO_X_HANDLER,
+	-- 						},
+	-- 					},
+	-- 				},
+	-- 			}
 
-				local stateMachine = StateMachine.new(X_STATE, eventsByName)
+	-- 			local stateMachine = StateMachine.new(X_STATE, eventsByName)
 
-				local badTypes = {
-					1,
-					"bad",
-					nil,
-					{},
-				}
+	-- 			local badTypes = {
+	-- 				1,
+	-- 				"bad",
+	-- 				nil,
+	-- 				{},
+	-- 			}
 
-				for _, badType in badTypes do
-					expect(function()
-						stateMachine:setDebugEnabled(badType)
-					end).to.throw(`boolean expected, got {typeof(badType)}`)
-				end
-			end)
+	-- 			for _, badType in badTypes do
+	-- 				expect(function()
+	-- 					stateMachine:setDebugEnabled(badType)
+	-- 				end).to.throw(`boolean expected, got {typeof(badType)}`)
+	-- 			end
+	-- 		end)
 
-			it("should set the value correctly", function()
-				local eventsByName = {
-					[TO_X_EVENT] = {
-						canBeFinal = true,
-						from = {
-							[X_STATE] = {
-								beforeAsync = TO_X_HANDLER,
-							},
-						},
-					},
-				}
+	-- 		it("should set the value correctly", function()
+	-- 			local eventsByName = {
+	-- 				[TO_X_EVENT] = {
+	-- 					canBeFinal = true,
+	-- 					from = {
+	-- 						[X_STATE] = {
+	-- 							beforeAsync = TO_X_HANDLER,
+	-- 						},
+	-- 					},
+	-- 				},
+	-- 			}
 
-				local stateMachine = StateMachine.new(X_STATE, eventsByName)
+	-- 			local stateMachine = StateMachine.new(X_STATE, eventsByName)
 
-				stateMachine:setDebugEnabled(true)
-				expect(stateMachine._isDebugEnabled).to.equal(true)
+	-- 			stateMachine:setDebugEnabled(true)
+	-- 			expect(stateMachine._isDebugEnabled).to.equal(true)
 
-				stateMachine:setDebugEnabled(false)
-				expect(stateMachine._isDebugEnabled).to.equal(false)
-			end)
-		end)
-	end)
+	-- 			stateMachine:setDebugEnabled(false)
+	-- 			expect(stateMachine._isDebugEnabled).to.equal(false)
+	-- 		end)
+	-- 	end)
+	-- end)
 
 	-- Placeholder
 	-- describe("destroy", function()

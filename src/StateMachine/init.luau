@@ -110,6 +110,7 @@
 
 local Signal = require(script.Modules.Signal)
 local ThreadQueue = require(script.Modules.ThreadQueue)
+local Logger = require(script.Modules.Logger)
 local t = require(script.Dependencies.t)
 
 -- These types are added for readability to disambiguate what the string is meant to represent in types
@@ -166,14 +167,21 @@ export type ClassType = typeof(setmetatable(
 		_eventQueue: ThreadQueue.ClassType,
 		_handlersByEventName: { [EventName]: EventHandler },
 		_validEventNamesByState: { [State]: { EventName } },
-		_isDebugEnabled: boolean,
+		_logger: Logger.ClassType,
 		_isDestroyed: boolean,
 	},
 	StateMachine
 ))
 
+local machineNumber = 0
+
 local newCheck = t.strict(t.tuple(State, t.map(EventName, Event)))
 function StateMachine.new(initialState: State, eventsByName: { [EventName]: Event }): ClassType
+	machineNumber += 1
+
+	local logger = Logger.new(`Machine{machineNumber}`, Logger.LogLevel.Info)
+	logger:addDefaultHandler()
+
 	newCheck(initialState, eventsByName)
 
 	local self = {
@@ -189,7 +197,7 @@ function StateMachine.new(initialState: State, eventsByName: { [EventName]: Even
 		_eventQueue = ThreadQueue.new(),
 		_handlersByEventName = {} :: { [EventName]: EventHandler },
 		_validEventNamesByState = {} :: { [State]: { EventName } },
-		_isDebugEnabled = false,
+		_logger = logger,
 		_isDestroyed = false,
 	}
 
@@ -209,7 +217,7 @@ function StateMachine._createEventHandlers(self: ClassType, eventsByName: { [Eve
 	for eventName, event in pairs(eventsByName) do
 		self._handlersByEventName[eventName] = function(...: any?)
 			local success, errorMessage = self:_queueEventAsync(eventName, event, ...)
-			assert(success, `Failed to queue event {eventName}: {errorMessage}`)
+			self:getLogger():assert(success, `Failed to queue event {eventName}:\n\t{errorMessage}`)
 		end
 
 		for state, _ in pairs(event.from) do
@@ -245,13 +253,13 @@ function StateMachine._queueEventAsync(self: ClassType, eventName: EventName, ev
 
 		checkAfterState(afterState)
 
-		self:_log(`Transitioning from {beforeState} to {afterState}`)
+		self:getLogger():debug(`Transitioning from {beforeState} to {afterState}`)
 
 		if afterState ~= beforeState then
 			self.leavingState:Fire(beforeState, afterState)
 			self._currentState = afterState
 			self.stateEntered:Fire(afterState, beforeState)
-			self:_log("Valid events:", self:getValidEvents())
+			self:getLogger():debug("Valid events:", self:getValidEvents())
 		end
 
 		if transition.afterAsync then
@@ -266,12 +274,12 @@ function StateMachine._queueEventAsync(self: ClassType, eventName: EventName, ev
 		local isFinished = not afterState
 
 		if isFinished then
-			assert(
+			self:getLogger():assert(
 				event.canBeFinal,
 				`Transition did not return next state during a non-final event {eventName} with state {beforeState}`
 			)
 			-- State machine finished
-			self:_log("Finished")
+			self:getLogger():debug("Finished")
 			self.finished:Fire(beforeState)
 		end
 	end)
@@ -283,13 +291,18 @@ end
 local handleCheck = t.strict(EventName)
 function StateMachine.handle(self: ClassType, eventName: EventName, ...: any?)
 	handleCheck(eventName)
-	assert(not self._isDestroyed, `Attempt to handle event {eventName} after the state machine was destroyed`)
+	self:getLogger()
+		:assert(not self._isDestroyed, `Attempt to handle event {eventName} after the state machine was destroyed`)
 
 	local handleEvent = self._handlersByEventName[eventName] :: EventHandler?
-	assert(handleEvent, `Invalid event name passed to handle: {eventName}`)
+	self:getLogger():assert(handleEvent, `Invalid event name passed to handle: {eventName}`)
 
-	self:_log(`Handling {eventName}`)
+	self:getLogger():debug(`Handling {eventName}`)
 	coroutine.wrap(handleEvent)(...)
+end
+
+function StateMachine.getLogger(self: ClassType)
+	return self._logger
 end
 
 function StateMachine.getState(self: ClassType)
@@ -298,18 +311,6 @@ end
 
 function StateMachine.getValidEvents(self: ClassType)
 	return self._currentState and self._validEventNamesByState[self._currentState] or {}
-end
-
-local setDebugEnabledCheck = t.strict(t.boolean)
-function StateMachine.setDebugEnabled(self: ClassType, isEnabled: boolean)
-	setDebugEnabledCheck(isEnabled)
-	self._isDebugEnabled = isEnabled
-end
-
-function StateMachine._log(self: ClassType, ...: any)
-	if self._isDebugEnabled then
-		print(...)
-	end
 end
 
 function StateMachine.destroy(self: ClassType)
