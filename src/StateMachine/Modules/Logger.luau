@@ -1,7 +1,28 @@
 --!strict
 
 --[[
-	TODO: Write header comment and generally document the behavior of this logger
+	TODO: Finish writing header comment and generally document the behavior of this logger
+	A lightweight, strongly-typed logger class designed with a minimal set of requirements for the StateMachine project, so it is not feature rich.
+	This logger class includes a few features such as different log levels (Debug, Info, Warning, Error), handler results (Sink, Continue), and the ability to add handlers.
+	It also provides methods for logging at different levels, and an assert method for condition checking where failing the assertion is automatically passed to the appropriate handler.
+
+	Handlers are processed in the opposite order they are added (LIFO). If a handler returns 'Sink', no other handlers will be invoked for that record.
+
+	Adding a default handler pipes non-erroneous records to output via print or warn depending on level,
+	and processes errors by throwing them, which will halt the execution of the program unless caught by an error handling mechanism.
+
+	Usage:
+	local logger = Logger.new("name")
+	logger:addHandler(level, handler)
+	logger:log(level, ...)
+	logger:debug(...)
+	logger:info(...)
+	logger:warning(...)
+	logger:error(...)
+	logger:assert(condition, message, level)
+
+	Author: Unknown
+	Date: Unknown
 --]]
 
 export type LogLevel = {
@@ -11,7 +32,16 @@ export type LogLevel = {
 	Error: number,
 }
 
-export type Handler = (level: LogLevel, name: string, ...any?) -> ()
+export type HandlerResult = {
+	Sink: "Sink",
+	Continue: "Continue",
+}
+local HandlerResult: HandlerResult = table.freeze({
+	Sink = "Sink",
+	Continue = "Continue",
+})
+
+export type Handler = (level: LogLevel, name: string, ...any?) -> HandlerResult?
 
 local LogLevelNameByValue: { [number]: LogLevel } = table.freeze({
 	[10] = "Debug",
@@ -25,15 +55,6 @@ local LogLevel: { [LogLevel]: number } = table.freeze({
 	Info = 20,
 	Warning = 30,
 	Error = 40,
-})
-
-export type HandlerResult = {
-	Sink: "Sink",
-	Continue: "Continue",
-}
-local HandlerResult: HandlerResult = table.freeze({
-	Sink = "Sink",
-	Continue = "Continue",
 })
 
 export type ClassType = typeof(setmetatable(
