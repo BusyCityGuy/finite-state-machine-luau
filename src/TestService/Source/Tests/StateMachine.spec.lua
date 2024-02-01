@@ -247,6 +247,7 @@ end
 
 return function()
 	local StateMachine = require(ReplicatedStorage.Source.StateMachine)
+	local Logger = require(ReplicatedStorage.Source.StateMachine.Modules.Logger)
 	local Freeze = require(TestService.Dependencies.Freeze)
 
 	-- Shortening things is generally bad practice, but this greatly improves readability of tests
@@ -254,48 +255,128 @@ return function()
 
 	-- Done
 	describe("new", function()
-		it("should error given bad initial state type", function()
-			local eventsByName = {
-				[TO_X_EVENT] = {
-					canBeFinal = true,
-					from = {
-						[X_STATE] = {
-							beforeAsync = TO_X_HANDLER,
+		describe("should error iff given bad parameter type for", function()
+			it("initial state", function()
+				local eventsByName = {
+					[TO_X_EVENT] = {
+						canBeFinal = true,
+						from = {
+							[X_STATE] = {
+								beforeAsync = TO_X_HANDLER,
+							},
 						},
 					},
-				},
-			}
+				}
 
-			local badTypes = {
-				1,
-				true,
-				nil,
-				{},
-			}
+				local badTypes = {
+					1,
+					true,
+					nil,
+					{},
+				}
 
-			for _, badType in badTypes do
-				expect(function()
-					StateMachine.new(badType, eventsByName)
-				end).to.throw("Bad tuple index #1")
-			end
-		end)
+				for _, badType in badTypes do
+					expect(function()
+						StateMachine.new(badType, eventsByName)
+					end).to.throw("Bad tuple index #1")
+				end
+			end)
 
-		it("should error given bad events type", function()
-			local badTypes = {
-				1,
-				true,
-				nil,
-				{
-					"bad",
-					"type",
-				},
-			}
+			it("events", function()
+				local badTypes = {
+					1,
+					true,
+					nil,
+					{
+						"bad",
+						"type",
+					},
+				}
 
-			for _, badType in badTypes do
-				expect(function()
-					StateMachine.new(X_STATE, badType)
-				end).to.throw("Bad tuple index #2")
-			end
+				for _, badType in badTypes do
+					expect(function()
+						StateMachine.new(X_STATE, badType)
+					end).to.throw("Bad tuple index #2")
+				end
+			end)
+
+			it("name", function()
+				local eventsByName = {
+					[TO_X_EVENT] = {
+						canBeFinal = true,
+						from = {
+							[X_STATE] = {
+								beforeAsync = TO_X_HANDLER,
+							},
+						},
+					},
+				}
+
+				local badTypes = {
+					1,
+					true,
+					nil,
+					{},
+				}
+
+				local goodTypes = {
+					nil,
+					"good type",
+				}
+
+				for _, badType in badTypes do
+					expect(function()
+						StateMachine.new(X_STATE, eventsByName, badType)
+					end).to.throw("Bad tuple index #3")
+				end
+
+				for _, goodType in goodTypes do
+					expect(function()
+						StateMachine.new(X_STATE, eventsByName, goodType)
+					end).never.to.throw()
+				end
+			end)
+
+			it("log level", function()
+				local eventsByName = {
+					[TO_X_EVENT] = {
+						canBeFinal = true,
+						from = {
+							[X_STATE] = {
+								beforeAsync = TO_X_HANDLER,
+							},
+						},
+					},
+				}
+
+				local badTypes = {
+					1,
+					true,
+					nil,
+					{},
+					"bad type",
+				}
+
+				local goodTypes = {
+					nil,
+					StateMachine.Logger.LogLevel.Error,
+					StateMachine.Logger.LogLevel.Warn,
+					StateMachine.Logger.LogLevel.Info,
+					StateMachine.Logger.LogLevel.Debug,
+				}
+
+				for _, badType in badTypes do
+					expect(function()
+						StateMachine.new(X_STATE, eventsByName, nil, badType)
+					end).to.throw("Bad tuple index #4")
+				end
+
+				for _, goodType in goodTypes do
+					expect(function()
+						StateMachine.new(X_STATE, eventsByName, nil, goodType)
+					end).never.to.throw()
+				end
+			end)
 		end)
 
 		it("should return a new state machine", function()
@@ -946,7 +1027,7 @@ return function()
 			stateMachine.finished:Wait()
 			expect(stateMachine._currentState).to.equal(FINISH_STATE)
 
-			logger:addHandler(logger.LogLevel.Error, function(level: logger.LogLevel, name: string, message: string)
+			logger:addHandler(logger.LogLevel.Error, function(level: Logger.LogLevel, name: string, message: string)
 				if level ~= logger.LogLevel.Error then
 					return
 				end
