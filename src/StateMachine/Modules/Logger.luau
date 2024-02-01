@@ -30,7 +30,9 @@
 		logger:error("This is an error message")
 		logger:assert(false, "This is an assertion error")
 
-	
+	A primary purpose of this class existing is to be able to check for errors from within tests. The StateMachine queues events,
+	starting a new thread to process them, which means errors that occur are not propagated to the main thread and can't be tested for.
+	This logger class allows for the testing of errors by adding a handler for errors, and then checking for those errors in tests.
 --]]
 
 export type LogLevel = "Error" | "Warning" | "Info" | "Debug"
