@@ -8,6 +8,7 @@
 	- The ability to add handlers: Handlers are functions that process logs. They can be added to the logger to customize its behavior.
 	- Handler results (Sink, Continue): Handlers return a result which determines if the logger should proceed with processing the log in other handlers.
 	- An assert method: Checks a condition, where failing the assertion invokes the appropriate handlers.
+	- A wrap method: Wraps a callback in pcall, invoking the appropriate handlers if an error occurs.
 
 	Handlers are processed from highest minimum level to lowest minimum level. Within a level, they are processed in the
 	opposite order that they are added (LIFO). If a handler returns 'Sink', no other handlers will be invoked for that record.
@@ -29,6 +30,9 @@
 		logger:warning("This is a warning message")
 		logger:error("This is an error message")
 		logger:assert(false, "This is an assertion error")
+		logger:wrap(function()
+			error("This is an error thrown from a wrapped function")
+		end)
 
 	A primary purpose of this class existing is to be able to check for errors from within tests. The StateMachine queues events,
 	starting a new thread to process them, which means errors that occur are not propagated to the main thread and can't be tested for.
@@ -171,6 +175,15 @@ function Logger.assert(self: ClassType, condition: boolean, message: string?, le
 	if not condition then
 		self:_log(level or LogLevel.Error, message or "Assertion failed")
 	end
+end
+
+function Logger.wrap(self: ClassType, callback: () -> ...any, ...: any?)
+	local success, result = pcall(callback, ...)
+	-- Not using self:assert to ensure the stack trace level is consistent for error tracebacks
+	if not success then
+		self:_log(LogLevel.Error, result)
+	end
+	return success, result
 end
 
 return Logger

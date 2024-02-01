@@ -223,7 +223,7 @@ local createEventHandlersCheck = t.strictInterface({
 	[EventName] = Event,
 })
 function StateMachine._createEventHandlers(self: ClassType, eventsByName: { [EventName]: Event })
-	createEventHandlersCheck(eventsByName)
+	self:getLogger():wrap(createEventHandlersCheck, eventsByName)
 
 	for eventName, event in pairs(eventsByName) do
 		self._handlersByEventName[eventName] = function(...: any?)
@@ -241,7 +241,7 @@ end
 local checkAfterState = t.strict(t.optional(State))
 local queueEventAsyncCheck = t.strict(t.tuple(EventName, Event))
 function StateMachine._queueEventAsync(self: ClassType, eventName: EventName, event: Event, ...: any?)
-	queueEventAsyncCheck(eventName, event)
+	self:getLogger():wrap(queueEventAsyncCheck, eventName, event)
 
 	local args = { ... }
 
@@ -262,7 +262,7 @@ function StateMachine._queueEventAsync(self: ClassType, eventName: EventName, ev
 			return
 		end
 
-		checkAfterState(afterState)
+		self:getLogger():wrap(checkAfterState, afterState)
 
 		self:getLogger():debug(`Transitioning from {beforeState} to {afterState}`)
 
@@ -301,7 +301,7 @@ end
 -- VarArgs get passed to the transition callbacks
 local handleCheck = t.strict(EventName)
 function StateMachine.handle(self: ClassType, eventName: EventName, ...: any?)
-	handleCheck(eventName)
+	self:getLogger():wrap(handleCheck, eventName)
 	self:getLogger()
 		:assert(not self._isDestroyed, `Attempt to handle event {eventName} after the state machine was destroyed`)
 
