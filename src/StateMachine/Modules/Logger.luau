@@ -17,13 +17,14 @@
 
 	Usage:
 		local Logger = require(path.to.Logger)
-		local logger = Logger.new("ModuleName")
+		local logger = Logger.new("ModuleName", Logger.LogLevel.Info)
 		logger:addDefaultHandler()
 		logger:addHandler(Logger.LogLevel.Error, function(level, name, ...)
 			-- Custom error handling that runs before the default handler, and prevents the default handler from handling this
+			print("Custom error handler:", name, level, ...)
 			return Logger.HandlerResult.Sink
 		end)
-		logger:debug("This is a debug message")
+		logger:debug("This is a debug message") -- Doesn't get handled because logger level is set to Info
 		logger:info("This is an info message")
 		logger:warning("This is a warning message")
 		logger:error("This is an error message")
