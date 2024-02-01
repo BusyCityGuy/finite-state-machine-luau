@@ -61,7 +61,12 @@ export type Handler = (level: LogLevel, name: string, ...any?) -> HandlerResult?
 -- Returning a negative number means levelA is less than levelB, 0 means they are equal,
 -- and a positive number means levelA is greater than levelB
 local function compareLevels(levelA: LogLevel, levelB: LogLevel): number
-	return table.find(orderedLogLevels, levelB) :: number - table.find(orderedLogLevels, levelA) :: number
+	local indexA = table.find(orderedLogLevels, levelA)
+	assert(indexA, `Invalid log level: {levelA}`)
+
+	local indexB = table.find(orderedLogLevels, levelB)
+	assert(indexB, `Invalid log level: {levelB}`)
+	return indexB - indexA
 end
 
 local Logger = {}

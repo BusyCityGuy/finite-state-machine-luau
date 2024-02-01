@@ -105,7 +105,7 @@
 
 			light:handle(Event.SwitchOff) -- prints "Light is transitioning to Off"
 			light:handle(Event.SwitchOn) -- prints "Light is transitioning to On", increases brightness over time, and then prints "Light is now On"
-			light:handle(Event.SwitchOn) -- warns "Illegal event `SwitchOn` called during state `On`" with a stack trace
+			light:handle(Event.SwitchOn) -- errors "Illegal event `SwitchOn` called during state `On`" with a stack trace
 --]]
 
 local Signal = require(script.Modules.Signal)
@@ -150,7 +150,10 @@ local Event = t.strictInterface({
 -- EventHandlers fire signals and call transition callbacks as outlined in the header comment
 type EventHandler = (...any) -> ()
 
+local DEFAULT_LOG_LEVEL = Logger.LogLevel.Info
+
 local StateMachine = {}
+StateMachine.Logger = Logger
 StateMachine.__index = StateMachine
 
 export type ClassType = typeof(setmetatable(
@@ -175,14 +178,22 @@ export type ClassType = typeof(setmetatable(
 
 local machineNumber = 0
 
-local newCheck = t.strict(t.tuple(State, t.map(EventName, Event)))
-function StateMachine.new(initialState: State, eventsByName: { [EventName]: Event }): ClassType
+local newCheck =
+	t.strict(t.tuple(State, t.map(EventName, Event), t.optional(t.string), t.optional(t.valueOf(Logger.LogLevel))))
+function StateMachine.new(
+	initialState: State,
+	eventsByName: { [EventName]: Event },
+	name: string?,
+	logLevel: Logger.LogLevel?
+): ClassType
+	newCheck(initialState, eventsByName, name, logLevel)
+
 	machineNumber += 1
+	local defaultName = `Machine{machineNumber}`
+	name = name or `Machine{machineNumber}`
 
-	local logger = Logger.new(`Machine{machineNumber}`, Logger.LogLevel.Info)
+	local logger = Logger.new(name or defaultName, logLevel or DEFAULT_LOG_LEVEL)
 	logger:addDefaultHandler()
-
-	newCheck(initialState, eventsByName)
 
 	local self = {
 		-- Public events
