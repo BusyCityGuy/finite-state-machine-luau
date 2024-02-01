@@ -1,0 +1,33 @@
+{
+	"emitLegacyScripts": false,
+	"name": "StateMachine-Test",
+	"tree": {
+		"$className": "DataModel",
+		"ReplicatedStorage": {
+			"$className": "ReplicatedStorage",
+			"Source": {
+				"$className": "Folder",
+				"StateMachine": {
+					"$path": "src/StateMachine",
+					"Dependencies": {
+						"$path": "Packages"
+					}
+				}
+			}
+		},
+		"TestService": {
+			"$className": "TestService",
+			"$properties": {
+				"ExecuteWithStudioRun": true
+			},
+			"Source": {
+				"$className": "Folder",
+				"$path": "src/TestService/Source"
+			},
+			"Dependencies": {
+				"$className": "Folder",
+				"$path": "DevPackages"
+			}
+		}
+	}
+}
