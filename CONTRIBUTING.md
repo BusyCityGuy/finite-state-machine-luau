@@ -74,7 +74,7 @@ If you plan to [run tests](#run-tests) from CLI (recommended), it's recommended 
 rojo build test.project.json --watch -o StateMachine-Test.rbxl
 ```
 
-If you're running tests in studio yourself instead of using the CLI, you can do an initial project build with either of the following:
+If you're running tests in studio yourself (not recommended) instead of using the CLI, you can do an initial project build with either of the following:
 
 | Method        | Instructions                                                                                                                                           |
 | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -82,9 +82,9 @@ If you're running tests in studio yourself instead of using the CLI, you can do 
 | VSC Extension | Click Rojo on the status bar at the bottom, mouse over `test.project.json` in the pop-up menu, and click the Build icon on the right of the list item. |
 
 ## Sync file changes to studio
-IF YOU ARE RUNNING TESTS USING THE COMMAND LINE INTERFACE (RECOMMENDED), THEN SKIP THIS SECTION! Go directly to [Run tests](#run-tests) You don't need to sync files to studio because you build the project before each test run.
+IF YOU ARE RUNNING TESTS USING THE COMMAND LINE INTERFACE (RECOMMENDED), THEN SKIP THIS SECTION! Go directly to [Run tests](#run-tests). You don't need to sync files to studio because you build the project before each test run.
 
-However, if you are manually running tests in studio, you need to sync changes after the initial build. Proceed with the following steps.
+However, if you are manually running tests in studio (not recommended), you need to sync changes after the initial build. Proceed with the following steps.
 
 ### Install the Rojo plugin for Roblox Studio plugin
 
