@@ -281,14 +281,31 @@ describe("new", function()
 				{},
 			}
 
+			local goodType = X_STATE
+
 			for _, badType in badTypes do
 				expect(function()
 					StateMachine.new(badType, eventsByName)
 				end).toThrow("Bad tuple index #1")
 			end
+
+			expect(function()
+				StateMachine.new(goodType, eventsByName)
+			end).never.toThrow()
 		end)
 
 		it("events", function()
+			local goodEventsByName = {
+				[TO_X_EVENT] = {
+					canBeFinal = true,
+					from = {
+						[X_STATE] = {
+							beforeAsync = TO_X_HANDLER,
+						},
+					},
+				},
+			}
+
 			local badTypes = {
 				1,
 				true,
@@ -304,6 +321,10 @@ describe("new", function()
 					StateMachine.new(X_STATE, badType)
 				end).toThrow("Bad tuple index #2")
 			end
+
+			expect(function()
+				StateMachine.new(X_STATE, goodEventsByName)
+			end).never.toThrow()
 		end)
 
 		it("name", function()
@@ -328,6 +349,7 @@ describe("new", function()
 			local goodTypes = {
 				nil,
 				"good type",
+				"",
 			}
 
 			for _, badType in badTypes do
@@ -454,11 +476,11 @@ describe("new", function()
 		expect(validEventNamesFromY).toEqual(expect.any("table"))
 
 		expect(Dict.count(validEventNamesFromX)).toBe(1)
-		expect(Dict.includes(validEventNamesFromX, TO_Y_EVENT)).never.toBeNil()
+		expect(Dict.includes(validEventNamesFromX, TO_Y_EVENT)).toBe(true)
 
 		expect(Dict.count(validEventNamesFromY)).toBe(2)
-		expect(Dict.includes(validEventNamesFromY, TO_X_EVENT)).never.toBeNil()
-		expect(Dict.includes(validEventNamesFromY, TO_Y_EVENT)).never.toBeNil()
+		expect(Dict.includes(validEventNamesFromY, TO_X_EVENT)).toBe(true)
+		expect(Dict.includes(validEventNamesFromY, TO_Y_EVENT)).toBe(true)
 	end)
 
 	it("should set handlers by event name", function()
@@ -548,6 +570,7 @@ describe("handle", function()
 			stateMachine:handle(nonexistentEventName)
 		end).toThrow(`Invalid event name passed to handle: {nonexistentEventName}`)
 	end)
+
 	describe("should fire signals", function()
 		it("in the correct order", function()
 			local initialState = X_STATE

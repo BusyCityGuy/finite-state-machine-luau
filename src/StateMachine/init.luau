@@ -155,6 +155,9 @@ local DEFAULT_LOG_LEVEL = Logger.LogLevel.Info
 local StateMachine = {}
 StateMachine.Logger = Logger
 StateMachine.__index = StateMachine
+StateMachine.__tostring = function(_self)
+	return "StateMachine"
+end
 
 export type ClassType = typeof(setmetatable(
 	{} :: {
