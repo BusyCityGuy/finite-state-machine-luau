@@ -572,7 +572,7 @@ describe("handle", function()
 	end)
 
 	describe("should fire signals", function()
-		it("in the correct order", function()
+		it("in the correct order", function(_, done)
 			local initialState = X_STATE
 			local eventsByName = {
 				[FINISH_EVENT] = {
@@ -587,52 +587,37 @@ describe("handle", function()
 
 			local stateMachine = StateMachine.new(initialState, eventsByName)
 			local resultSignalOrder = {}
-
-			stateMachine:handle(FINISH_EVENT)
-
-			local mainThread = coroutine.running()
-			local timeout = 0.5
-			local timeoutThread = task.delay(timeout, function()
-				coroutine.resume(mainThread, true)
-			end)
-
 			local signalConnections = {}
 
 			-- Set up event connections
 			for _, signalName in ORDERED_SIGNALS do
-				local signalConnection = stateMachine[signalName]:Connect(function(_, _)
-					if coroutine.status(timeoutThread) ~= "suspended" then
-						return
-					end
+				local newSignalConnection = stateMachine[signalName]:Connect(function(_, _)
 					table.insert(resultSignalOrder, signalName)
 
 					if #resultSignalOrder == #ORDERED_SIGNALS then
-						task.cancel(timeoutThread)
-						coroutine.resume(mainThread, false)
+						for _, signalConnection in signalConnections do
+							signalConnection:Disconnect()
+						end
+						xpcall(function()
+							expect(resultSignalOrder).toEqual(ORDERED_SIGNALS)
+							done()
+						end, function(err)
+							print("PRINTING ERROR")
+							-- for i, v in err do
+							-- 	print(`{i}: {v}`)
+							-- end
+							print(err.message)
+							print("DONE PRINTING ERROR")
+							done(err)
+						end)
 					end
 				end)
 
-				table.insert(signalConnections, signalConnection)
+				table.insert(signalConnections, newSignalConnection)
 			end
 
-			local didTimeOut = coroutine.yield(mainThread)
-			for _, signalConnection in signalConnections do
-				signalConnection:Disconnect()
-			end
-
-			if didTimeOut then
-				local numSignalsNotFired = #ORDERED_SIGNALS - #resultSignalOrder
-				warn(
-					debug.traceback(
-						`Timed out waiting for {numSignalsNotFired} signal{plural(numSignalsNotFired)} to fire after {timeout} seconds`
-					)
-				)
-			end
-
-			for index, expectedSignalName in ORDERED_SIGNALS do
-				expect(resultSignalOrder[index]).toBe(expectedSignalName)
-			end
-		end)
+			stateMachine:handle(FINISH_EVENT)
+		end, 0.5)
 
 		describe(`with the correct parameters and state`, function()
 			local initialState = X_STATE
