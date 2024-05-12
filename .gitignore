@@ -6,3 +6,5 @@
 *.rbxlx.lock
 Packages
 DevPackages
+sourcemap.json
+settings.json
