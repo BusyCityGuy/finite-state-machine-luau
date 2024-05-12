@@ -21,16 +21,16 @@ if not fs.isFile(rojoProjectFile) then
 end
 
 type RojoProject = {
-	name : string,
-	tree : any,
+	name: string,
+	tree: any,
 }
 
-local rojoProject = serde.decode("json", fs.readFile(rojoProjectFile))::RojoProject;
+local rojoProject = serde.decode("json", fs.readFile(rojoProjectFile)) :: RojoProject
 
 local stateMachinePath = `./{rojoProject.name}.rbxl`
 
 stdio.write(`Building state machine [{stateMachinePath}]...\n`)
-local proc = process.spawn("rojo", {"build", rojoProjectFile, "-o", stateMachinePath})
+local proc = process.spawn("rojo", { "build", rojoProjectFile, "-o", stateMachinePath })
 if not proc.ok then
 	error(`Failed to build state machine [{stateMachinePath}]: {proc.stderr}`)
 end
@@ -72,20 +72,20 @@ local contextGame = setmetatable({
 			return {
 				ExitAsync = function(self, code: number)
 					process.exit(code)
-				end
-			}::any
+				end,
+			} :: any
 		end
 		return game:GetService(serviceName)
-	end
-}, {__index = game})
+	end,
+}, { __index = game })
 
 -- DEPENDENTS: [runTests.lua, Jest]
-local function loadScript(script: roblox.Instance) : (((...any) -> ...any)?, string?)
+local function loadScript(script: roblox.Instance): (((...any) -> ...any)?, string?)
 	script = ReducedInstance.once(script)
 	if not script:IsA("LuaSourceContainer") then
 		return nil, "Attempt to load a non LuaSourceContainer"
 	end
-	local bytecodeSuccess, bytecode = pcall(luau.compile, (script::never).Source)
+	local bytecodeSuccess, bytecode = pcall(luau.compile, (script :: never).Source)
 	if not bytecodeSuccess then
 		return nil, bytecode
 	end
@@ -99,7 +99,7 @@ local function loadScript(script: roblox.Instance) : (((...any) -> ...any)?, str
 			task = task,
 			DateTime = DateTime,
 			debug = Debug,
-		}, {__index = roblox})::any,
+		}, { __index = roblox }) :: any,
 	})
 
 	return callableFn
