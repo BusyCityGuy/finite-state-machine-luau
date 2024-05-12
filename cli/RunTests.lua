@@ -29,7 +29,7 @@ local rojoProject = serde.decode("json", fs.readFile(rojoProjectFile))::RojoProj
 local stateMachinePath = `./{rojoProject.name}.rbxl`
 
 stdio.write(`Building state machine [{stateMachinePath}]...\n`)
-local proc = process.spawn("rojo", {"build", "test.project.json", "-o", stateMachinePath})
+local proc = process.spawn("rojo", {"build", rojoProjectFile, "-o", stateMachinePath})
 if not proc.ok then
 	error(`Failed to build state machine [{stateMachinePath}]: {proc.stderr}`)
 end
