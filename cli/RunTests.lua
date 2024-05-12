@@ -1,6 +1,8 @@
 local fs = require("@lune/fs")
 local luau = require("@lune/luau")
 local task = require("@lune/task")
+local serde = require("@lune/serde")
+local stdio = require("@lune/stdio")
 local roblox = require("@lune/roblox")
 local process = require("@lune/process")
 
@@ -12,13 +14,24 @@ local Runtime = require("Utils/Runtime")
 -- DEPENDENTS: [runTests.lua, Jest]
 local ReducedInstance = require("Utils/ReducedInstance")
 
-local stateMachinePath = "./StateMachine-Test.rbxl"
+local rojoProjectFile = process.args[1] or "test.project.json"
+if not fs.isFile(rojoProjectFile) then
+	error("Rojo project file not found")
+end
 
-if not fs.isFile(stateMachinePath) then
-	local proc = process.spawn("rojo", {"build", "test.project.json", "-o", stateMachinePath})
-	if not proc.ok then
-		error(`Failed to build state machine: {proc.stderr}`)
-	end
+type RojoProject = {
+	name : string,
+	tree : any,
+}
+
+local rojoProject = serde.decode("json", fs.readFile(rojoProjectFile))::RojoProject;
+
+local stateMachinePath = `./{rojoProject.name}.rbxl`
+
+stdio.write(`Building state machine [{stateMachinePath}]...\n`)
+local proc = process.spawn("rojo", {"build", "test.project.json", "-o", stateMachinePath})
+if not proc.ok then
+	error(`Failed to build state machine [{stateMachinePath}]: {proc.stderr}`)
 end
 
 local game = roblox.deserializePlace(fs.readFile(stateMachinePath))
@@ -99,7 +112,7 @@ local MODULE_REGISTRY = {}
 -- DEPENDENTS: [Jest]
 function requireModule(moduleScript: roblox.Instance)
 	if not moduleScript or not moduleScript:IsA("ModuleScript") then
-		error("Attempt to require a whole lot of nada")
+		error("Attempt to require a non ModuleScript")
 	end
 	local cached = MODULE_REGISTRY[moduleScript]
 	if cached then
