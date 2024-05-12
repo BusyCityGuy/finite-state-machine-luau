@@ -7,8 +7,8 @@ local DateTime = setmetatable({
 		return setmetatable({
 			UnixTimestampMillis = now.unixTimestampMillis,
 			UnixTimestamp = now.unixTimestamp,
-		}, {__index = now})
-	end
-}, {__index = datetime})
+		}, { __index = now })
+	end,
+}, { __index = datetime })
 
 return DateTime

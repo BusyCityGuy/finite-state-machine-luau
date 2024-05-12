@@ -8,7 +8,7 @@ type Listener = {
 
 local Runtime = {}
 Runtime._running = false
-Runtime._listeners = {}::{Listener}
+Runtime._listeners = {} :: { Listener }
 
 function Runtime._loop()
 	if Runtime._running then
@@ -32,7 +32,7 @@ function Runtime._loop()
 	Runtime._running = false
 end
 function Runtime.Connect(_, callback: (number) -> ())
-	local listener : Listener = {
+	local listener: Listener = {
 		callback = callback,
 		disconnected = false,
 	}
@@ -43,7 +43,7 @@ function Runtime.Connect(_, callback: (number) -> ())
 		Disconnect = function(self)
 			self.Connected = false
 			listener.disconnected = true
-		end
+		end,
 	}
 end
 
