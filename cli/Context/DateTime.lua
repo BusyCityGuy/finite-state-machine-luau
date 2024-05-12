@@ -1,3 +1,4 @@
+--!strict
 local datetime = require("@lune/datetime")
 
 local DateTime = setmetatable({

@@ -50,7 +50,7 @@ function ReducedInstance.once(instance: roblox.Instance) : roblox.Instance
 
 	ReducedInstance._cache[fullName] = self
 
-	return (self::any)::roblox.Instance -- 🤫
+	return (self::any)::roblox.Instance
 end
 
 return ReducedInstance
