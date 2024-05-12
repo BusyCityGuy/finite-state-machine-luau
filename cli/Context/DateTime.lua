@@ -2,7 +2,7 @@
 local datetime = require("@lune/datetime")
 
 local DateTime = setmetatable({
-	now = function(module)
+	now = function()
 		local now = datetime.now()
 		return setmetatable({
 			UnixTimestampMillis = now.unixTimestampMillis,
