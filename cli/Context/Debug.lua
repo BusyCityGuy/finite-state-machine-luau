@@ -1,7 +1,8 @@
+--!strict
 local Debug
 
 Debug = setmetatable({
-	_loader = function(module)
+	_loader = function(module : any)
 		error("Not implemented")
 	end,
 	loadmodule = function(module)

@@ -1,8 +1,14 @@
+--!strict
 local task = require("@lune/task")
+
+type Listener = {
+	callback: (number) -> (),
+	disconnected: boolean,
+}
 
 local Runtime = {}
 Runtime._running = false
-Runtime._listeners = {}
+Runtime._listeners = {}::{Listener}
 
 function Runtime._loop()
 	if Runtime._running then
@@ -26,7 +32,7 @@ function Runtime._loop()
 	Runtime._running = false
 end
 function Runtime.Connect(_, callback: (number) -> ())
-	local listener = {
+	local listener : Listener = {
 		callback = callback,
 		disconnected = false,
 	}
@@ -35,7 +41,7 @@ function Runtime.Connect(_, callback: (number) -> ())
 	return {
 		Connected = true,
 		Disconnect = function(self)
-			self.disconnected = true
+			self.Connected = false
 			listener.disconnected = true
 		end
 	}

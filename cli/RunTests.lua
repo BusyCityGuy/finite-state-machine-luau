@@ -1,3 +1,4 @@
+--!strict
 local fs = require("@lune/fs")
 local luau = require("@lune/luau")
 local task = require("@lune/task")
@@ -72,7 +73,7 @@ local contextGame = setmetatable({
 				ExitAsync = function(self, code: number)
 					process.exit(code)
 				end
-			}
+			}::any
 		end
 		return game:GetService(serviceName)
 	end
@@ -80,7 +81,7 @@ local contextGame = setmetatable({
 
 -- DEPENDENTS: [runTests.lua, Jest]
 local function loadScript(script: roblox.Instance) : (((...any) -> ...any)?, string?)
-	script = ReducedInstance.once(script)::roblox.Instance -- 🤫
+	script = ReducedInstance.once(script)
 	if not script:IsA("LuaSourceContainer") then
 		return nil, "Attempt to load a non LuaSourceContainer"
 	end
@@ -127,7 +128,17 @@ function requireModule(moduleScript: roblox.Instance)
 	return result
 end
 
-local func, err = loadScript(ReducedInstance.once(game:GetService("TestService").Source.run))
+-- Main
+local TestService = game:GetService("TestService")
+local Source = TestService:FindFirstChild("Source")
+if not Source then
+	error("game.TestService.Source not found")
+end
+local run = Source:FindFirstChild("run")
+if not run then
+	error("game.TestService.Source.run not found")
+end
+local func, err = loadScript(ReducedInstance.once(run))
 if not func then
 	error(err)
 end
