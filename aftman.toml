@@ -6,5 +6,6 @@
 rojo = "rojo-rbx/rojo@7.4.0"
 selene = "kampfkarren/selene@0.26.1"
 stylua = "johnnymorganz/stylua@0.19.1"
-wally = "upliftgames/wally@0.3.2"
+wally = "UpliftGames/wally@0.3.2"
 run-in-roblox = "rojo-rbx/run-in-roblox@0.3.0"
+lune = "lune-org/lune@0.8.3"
