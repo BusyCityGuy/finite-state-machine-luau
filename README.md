@@ -4,6 +4,10 @@ A feature rich and fully typed implementation of a Finite State Machine in [Luau
 
 This project is licensed under the terms of the MIT license. See [LICENSE.md](https://github.com/busycityguy/finite-state-machine-luau/blob/main/LICENSE.md) for details.
 
+## This project is a work in progress
+
+Tests need to be written and the API may receive small changes while this project is being finalized for a first release.
+
 # What's a finite state machine?
 
 A Finite State Machine (FSM) provides a way to enforce specific logical flow among a set of States. Given an Event, the FSM responds by looking up the corresponding Transition for that Event in its current State. A Transition is a callback function that is invoked when an Event is given to the FSM, and it returns the next State for the FSM to move to.
