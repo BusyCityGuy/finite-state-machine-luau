@@ -150,7 +150,17 @@ local Event = t.strictInterface({
 -- EventHandlers fire signals and call transition callbacks as outlined in the header comment
 type EventHandler = (...any) -> ()
 
-local DEFAULT_LOG_LEVEL = Logger.LogLevel.Info
+local DEFAULT_LOG_LEVEL: Logger.LogLevel = Logger.LogLevel.Info
+
+-- Runtime type check definitions are up here because it somehow messes up Luau typing if they're put right above the corresponding function.
+local newCheck =
+	t.strict(t.tuple(State, t.map(EventName, Event), t.optional(t.string), t.optional(t.valueOf(Logger.LogLevel))))
+local createEventHandlersCheck = t.strictInterface({
+	[EventName] = Event,
+})
+local checkAfterState = t.strict(t.optional(State))
+local queueEventAsyncCheck = t.strict(t.tuple(EventName, Event))
+local handleCheck = t.strict(EventName)
 
 local StateMachine = {}
 StateMachine.Logger = Logger
@@ -181,8 +191,6 @@ export type ClassType = typeof(setmetatable(
 
 local machineNumber = 0
 
-local newCheck =
-	t.strict(t.tuple(State, t.map(EventName, Event), t.optional(t.string), t.optional(t.valueOf(Logger.LogLevel))))
 function StateMachine.new(
 	initialState: State,
 	eventsByName: { [EventName]: Event },
@@ -222,9 +230,6 @@ function StateMachine.new(
 	return self
 end
 
-local createEventHandlersCheck = t.strictInterface({
-	[EventName] = Event,
-})
 function StateMachine._createEventHandlers(self: ClassType, eventsByName: { [EventName]: Event })
 	self:getLogger():wrap(createEventHandlersCheck, eventsByName)
 
@@ -241,8 +246,6 @@ function StateMachine._createEventHandlers(self: ClassType, eventsByName: { [Eve
 	end
 end
 
-local checkAfterState = t.strict(t.optional(State))
-local queueEventAsyncCheck = t.strict(t.tuple(EventName, Event))
 function StateMachine._queueEventAsync(self: ClassType, eventName: EventName, event: Event, ...: any?)
 	self:getLogger():wrap(queueEventAsyncCheck, eventName, event)
 
@@ -302,7 +305,6 @@ function StateMachine._queueEventAsync(self: ClassType, eventName: EventName, ev
 end
 
 -- VarArgs get passed to the transition callbacks
-local handleCheck = t.strict(EventName)
 function StateMachine.handle(self: ClassType, eventName: EventName, ...: any?)
 	self:getLogger():wrap(handleCheck, eventName)
 	self:getLogger()
@@ -312,10 +314,10 @@ function StateMachine.handle(self: ClassType, eventName: EventName, ...: any?)
 	self:getLogger():assert(handleEvent, `Invalid event name passed to handle: {eventName}`)
 
 	self:getLogger():debug(`Handling {eventName}`)
-	coroutine.wrap(handleEvent)(...)
+	coroutine.wrap(handleEvent :: EventHandler)(...)
 end
 
-function StateMachine.getLogger(self: ClassType)
+function StateMachine.getLogger(self: ClassType): Logger.ClassType
 	return self._logger
 end
 

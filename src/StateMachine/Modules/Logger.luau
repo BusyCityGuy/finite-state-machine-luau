@@ -171,13 +171,14 @@ function Logger.error(self: ClassType, ...: any?)
 	self:_log(LogLevel.Error, ...)
 end
 
-function Logger.assert(self: ClassType, condition: boolean, message: string?, level: LogLevel?)
+function Logger.assert(self: ClassType, condition: any, message: string?, level: LogLevel?)
 	if not condition then
 		self:_log(level or LogLevel.Error, message or "Assertion failed")
 	end
 end
 
-function Logger.wrap(self: ClassType, callback: () -> ...any, ...: any?)
+function Logger.wrap(self: ClassType, callback: (...any) -> ...any, ...: any?)
+	-- FIXME: Return all results, not just the first one
 	local success, result = pcall(callback, ...)
 	-- Not using self:assert to ensure the stack trace level is consistent for error tracebacks
 	if not success then
