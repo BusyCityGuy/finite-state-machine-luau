@@ -1,4 +1,10 @@
 --!strict
+
+--[[
+	Provides a connection to a loop that runs every frame. This is used
+	in the custom Heartbeat implementation in lune/runTests.lua
+--]]
+
 local task = require("@lune/task")
 
 type Listener = {
@@ -31,13 +37,16 @@ function Runtime._loop()
 	end
 	Runtime._running = false
 end
+
 function Runtime.Connect(_, callback: (number) -> ())
 	local listener: Listener = {
 		callback = callback,
 		disconnected = false,
 	}
+
 	table.insert(Runtime._listeners, listener)
 	task.spawn(Runtime._loop)
+
 	return {
 		Connected = true,
 		Disconnect = function(self)
