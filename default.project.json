@@ -1,6 +1,9 @@
 {
-	"name": "Finite State Machine",
+	"name": "StateMachine",
 	"tree": {
-		"$path": "src"
+		"$path": "src/StateMachine",
+		"Dependencies": {
+			"$path": "Packages"
+		}
 	}
 }
