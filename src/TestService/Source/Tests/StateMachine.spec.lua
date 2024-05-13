@@ -602,12 +602,6 @@ describe("handle", function()
 							expect(resultSignalOrder).toEqual(ORDERED_SIGNALS)
 							done()
 						end, function(err)
-							print("PRINTING ERROR")
-							-- for i, v in err do
-							-- 	print(`{i}: {v}`)
-							-- end
-							print(err.message)
-							print("DONE PRINTING ERROR")
 							done(err)
 						end)
 					end
@@ -617,7 +611,7 @@ describe("handle", function()
 			end
 
 			stateMachine:handle(FINISH_EVENT)
-		end, 0.5)
+		end, 500)
 
 		describe(`with the correct parameters and state`, function()
 			local initialState = X_STATE
