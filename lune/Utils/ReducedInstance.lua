@@ -1,18 +1,27 @@
 --!strict
+
+--[[
+	Lune instances are tables containing a reference to the instance, but Lune creates
+	different tables even for the same instance. Jest's caching behavior depends
+	on the instance always being the same to look it up by key, so this function serves to
+	always return the same "wrapped" instance when given the same instance. It has to also
+	override the FindFirstChild, WaitForChild, and Instance property getter to ensure they
+	also return a "wrapped" instance.
+--]]
+
 local roblox = require("@lune/roblox")
 
 local ReducedInstance = {}
 ReducedInstance._cache = {}
 
--- this is so lune's Instance would be one reference, at least for now.
 function ReducedInstance.once(instance: roblox.Instance): roblox.Instance
-	if not instance then
-		error("Instance is nil")
-	end
+	assert(instance, "Instance is nil")
+
 	local fullName = instance:GetFullName()
 	if ReducedInstance._cache[fullName] then
 		return ReducedInstance._cache[fullName]
 	end
+
 	local self = setmetatable({
 		instance = instance,
 	}, {
