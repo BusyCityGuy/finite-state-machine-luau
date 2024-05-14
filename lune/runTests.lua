@@ -7,7 +7,7 @@
 	Since the parent folder is named `lune`, the `lune` cli will automatically look in this directory for scripts to run.
 
 	Usage (from project directory):
-		lune RunTests.lua [project.json]
+		lune run runTests [project.json]
 --]]
 
 local fs = require("@lune/fs")
@@ -102,7 +102,7 @@ implementRobloxMethods()
 local requireModule
 
 -- DEPENDENTS: [TestService/Source/run.server.lua]
--- ProcessServices isn't implemented in Lune, so this creates a workable implementation of it by mapping it to process.exit
+-- ProcessService isn't implemented in Lune, so this creates a workable implementation of it by mapping it to process.exit
 local gameWithContext = setmetatable({
 	GetService = function(_self, serviceName: string)
 		if serviceName == "ProcessService" then
