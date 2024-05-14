@@ -47,11 +47,11 @@ end
 
 local function buildProject(rojoProjectFilePath: string)
 	local rojoProject = readRojoProject(rojoProjectFilePath)
-	local builtProjectFilePath = `./{rojoProject.name}.rbxl`
+	local builtProjectFilePath = `{rojoProject.name}.rbxl`
 
 	stdio.write(`Building project {rojoProjectFilePath} into {builtProjectFilePath}...\n`)
 
-	local proc = process.spawn("rojo", { "build", rojoProjectFilePath, "-o", builtProjectFilePath })
+	local proc = process.spawn("$HOME/.aftman/bin/rojo", { "build", rojoProjectFilePath, "-o", builtProjectFilePath })
 	assert(proc.ok, `Failed to build project [{builtProjectFilePath}]: {proc.stderr}`)
 
 	local success, result = pcall(roblox.deserializePlace, fs.readFile(builtProjectFilePath))
