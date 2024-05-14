@@ -11,8 +11,8 @@ if [ ! -f "$TYPES_FILE" ]; then
     echo "Wrote global types to $TYPES_FILE"
 fi
 
-echo "Beginning analysis with settings from $SETTINGS_FILE and global types from $TYPES_FILE..."
 if [ -n "$2" ]; then
+    echo "Beginning analysis on $2 with sourcemap from $1, settings from $SETTINGS_FILE, and global types from $TYPES_FILE..."
     $HOME/.aftman/bin/luau-lsp analyze \
         --settings=$SETTINGS_FILE \
         --definitions=$TYPES_FILE \
@@ -20,6 +20,7 @@ if [ -n "$2" ]; then
         --ignore "*Packages/**" \
         "$2"
 else
+    echo "Beginning analysis on $1 with settings from $SETTINGS_FILE and global types from $TYPES_FILE..."
     $HOME/.aftman/bin/luau-lsp analyze \
         --settings=$SETTINGS_FILE \
         --definitions=$TYPES_FILE \
