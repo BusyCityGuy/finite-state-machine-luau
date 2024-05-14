@@ -119,7 +119,7 @@ jobs:
 
       - name: Analyze tests with luau-lsp
         run: |
-          ./scripts/sourcemap.sh default.project.json testSourcemap.json
+          ./scripts/sourcemap.sh test.project.json testSourcemap.json
           ./scripts/analyze.sh testSourcemap.json src/TestService
 
       - name: Analyze Lune scripts with luau-lsp
