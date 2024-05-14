@@ -1,0 +1,51 @@
+name: Luau Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  install-tools:
+    name: Install tools
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.1.4
+
+      - name: Install Aftman
+        uses: ok-nick/setup-aftman@v0.4.2
+
+      - name: Setup Lune
+        run: lune setup
+
+      - name: Cache Aftman tools and Lune typedefs
+        uses: actions/cache@v4.0.2
+        with:
+          path: |
+            ~/.aftman
+            ~/.lune
+          key: tools-${{ hashFiles('aftman.toml') }}
+
+  # lune-org/lune is assumed to be included in the repository's aftman.toml file
+  analyzing:
+    name: Run jest tests with Lune
+    runs-on: ubuntu-latest
+    needs: [install-tools]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.1.4
+
+      - name: Restore cached Aftman tools and Lune typedefs
+        uses: actions/cache@v4.0.2
+        with:
+          path: |
+            ~/.aftman
+            ~/.lune
+          key: tools-${{ hashFiles('aftman.toml') }}
+
+      - name: Test with Lune
+        run: ./scripts/test.sh

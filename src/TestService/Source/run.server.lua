@@ -6,6 +6,7 @@ local runCLI = Jest.runCLI
 -- Jest.TestBootstrap:run({ TestService.Source.Tests })
 
 local processServiceExists, ProcessService = pcall(function()
+	-- selene: allow(incorrect_standard_library_use)
 	return game:GetService("ProcessService")
 end)
 

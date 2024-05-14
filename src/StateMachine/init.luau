@@ -108,9 +108,9 @@
 			light:handle(Event.SwitchOn) -- errors "Illegal event `SwitchOn` called during state `On`" with a stack trace
 --]]
 
+local Logger = require(script.Modules.Logger)
 local Signal = require(script.Modules.Signal)
 local ThreadQueue = require(script.Modules.ThreadQueue)
-local Logger = require(script.Modules.Logger)
 local t = require(script.Dependencies.t)
 
 -- These types are added for readability to disambiguate what the string is meant to represent in types

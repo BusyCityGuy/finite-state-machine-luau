@@ -1,0 +1,111 @@
+name: CI checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  install-tools:
+    name: Install tools
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.1.4
+
+      - name: Install Aftman
+        uses: ok-nick/setup-aftman@v0.4.2
+
+      - name: Setup Lune
+        run: lune setup
+
+      - name: Cache Aftman tools and Lune typedefs
+        uses: actions/cache@v4.0.2
+        with:
+          path: |
+            ~/.aftman
+            ~/.lune
+          key: tools-${{ hashFiles('aftman.toml') }}
+
+  # Kampfkarren/selene is assumed to be included in the repository's aftman.toml file
+  linting:
+    name: Lint with Selene
+    runs-on: ubuntu-latest
+    needs: [install-tools]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.1.4
+
+      - name: Restore cached Aftman tools
+        uses: actions/cache@v4.0.2
+        with:
+          path: ~/.aftman
+          key: tools-${{ hashFiles('aftman.toml') }}
+
+      - name: Lint StateMachine
+        run: ./scripts/lint.sh src/StateMachine
+
+      - name: Lint tests
+        run: ./scripts/lint.sh src/TestService
+
+      - name: Lint Lune
+        run: ./scripts/lint.sh lune
+
+  # JohnnyMorganz/stylua is assumed to be included in the repository's aftman.toml file
+  formatting:
+    name: Check format with StyLua
+    runs-on: ubuntu-latest
+    needs: [install-tools]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.1.4
+
+      - name: Restore cached Aftman tools
+        uses: actions/cache@v4.0.2
+        with:
+          path: ~/.aftman
+          key: tools-${{ hashFiles('aftman.toml') }}
+
+      - name: Enforce StateMachine code style with StyLua
+        run: ./scripts/formatCheck.sh src/StateMachine
+
+      - name: Enforce tests code style with StyLua
+        run: ./scripts/formatCheck.sh src/TestService
+
+      - name: Enforce Lune scripts code style with StyLua
+        run: ./scripts/formatCheck.sh lune
+
+  # JohnnyMorganz/luau-lsp is assumed to be included in the repository's aftman.toml file
+  analyzing:
+    name: Analyze with luau-lsp
+    runs-on: ubuntu-latest
+    needs: [install-tools]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.1.4
+
+      - name: Restore cached Aftman tools and Lune typedefs
+        uses: actions/cache@v4.0.2
+        with:
+          path: |
+            ~/.aftman
+            ~/.lune
+          key: tools-${{ hashFiles('aftman.toml') }}
+
+      - name: Analyze StateMachine with luau-lsp
+        run: |
+          rojo sourcemap default.project.json --output sourcemap.json
+          ./scripts/analyze.sh stateMachineSourcemap.json src/StateMachine
+
+      - name: Analyze tests with luau-lsp
+        run: |
+          rojo sourcemap default.project.json --output sourcemap.json
+          ./scripts/analyze.sh sourcemap.json src/TestService
+
+      - name: Analyze Lune scripts with luau-lsp
+        run: ./scripts/analyze.sh lune

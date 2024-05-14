@@ -4,6 +4,7 @@
 *.rbxlx
 *.rbxl.lock
 *.rbxlx.lock
+globaltypes.d.lua
 Packages
 DevPackages
 sourcemap.json
