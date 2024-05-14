@@ -52,9 +52,9 @@ local TO_X_HANDLER = to(X_STATE)
 local TO_Y_HANDLER = to(Y_STATE)
 local FINISH_HANDLER = to(FINISH_STATE)
 
-local function plural(count: number)
-	return if count == 1 then "" else "s"
-end
+-- local function plural(count: number)
+-- 	return if count == 1 then "" else "s"
+-- end
 
 -- TODO: Evaluate each test to see if it could be done better in Jest. These are currently just translated directly from TestEZ.
 -- Done
