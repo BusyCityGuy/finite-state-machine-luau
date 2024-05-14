@@ -1,7 +1,7 @@
 --!nonstrict
 -- FIXME: Change to strict and fix type issues
 
--- local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TestService = game:GetService("TestService")
 
 local Freeze = require(TestService.Dependencies.Freeze)
