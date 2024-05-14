@@ -1,7 +1,7 @@
 --!strict
 
 --[[
-	A lightweight, strongly-typed logger class designed with a minimal set of requirements for the StateMachine project, so it is not feature rich.
+	A lightweight, strictly-typed logger class designed with a minimal set of requirements for the StateMachine project, so it is not feature rich.
 	This logger class includes a few features such:
 	- A concept of log levels (Debug, Info, Warning, Error): These levels allow for categorizing the importance of the logs.
 	- Methods for logging at these levels: Convenient methods for logging at each level.
@@ -40,18 +40,20 @@
 --]]
 
 export type LogLevel = "Error" | "Warning" | "Info" | "Debug"
-local LogLevel: { [string]: LogLevel } = table.freeze({
+local LogLevel: { [string]: LogLevel } = {
 	Debug = "Debug" :: "Debug",
 	Info = "Info" :: "Info",
 	Warning = "Warning" :: "Warning",
 	Error = "Error" :: "Error",
-})
+}
+table.freeze(LogLevel)
 
 export type HandlerResult = "Sink" | "Continue"
-local HandlerResult: { [string]: HandlerResult } = table.freeze({
+local HandlerResult: { [string]: HandlerResult } = {
 	Sink = "Sink" :: "Sink",
 	Continue = "Continue" :: "Continue",
-})
+}
+table.freeze(HandlerResult)
 
 local orderedLogLevels: { LogLevel } = {
 	LogLevel.Error,

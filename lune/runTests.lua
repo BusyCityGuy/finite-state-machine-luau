@@ -12,11 +12,10 @@
 
 local fs = require("@lune/fs")
 local luau = require("@lune/luau")
-local task = require("@lune/task")
-local serde = require("@lune/serde")
-local stdio = require("@lune/stdio")
-local roblox = require("@lune/roblox")
 local process = require("@lune/process")
+local roblox = require("@lune/roblox")
+local serde = require("@lune/serde")
+local task = require("@lune/task")
 
 -- DEPENDENTS: [Jest]
 local DateTime = require("Context/DateTime")
@@ -34,9 +33,10 @@ type RojoProject = {
 local DEFAULT_PROJECT_FILE_PATH = "test.project.json"
 
 local function readRojoProject(filePath: string): RojoProject
-	if not fs.isFile(filePath) then
-		error(`Rojo project file {filePath} not found. Please create it or specify a different file as an argument.`)
-	end
+	assert(
+		fs.isFile(filePath),
+		`Rojo project file {filePath} not found. Please create it or specify a different file as an argument.`
+	)
 
 	local success, result = pcall(serde.decode, "json" :: "json", fs.readFile(filePath))
 	assert(success, `Failed to read Rojo project file {filePath}: {result}`)
@@ -47,13 +47,16 @@ end
 
 local function buildProject(rojoProjectFilePath: string)
 	local rojoProject = readRojoProject(rojoProjectFilePath)
-	local builtProjectFilePath = `./{rojoProject.name}.rbxl`
+	local builtProjectFilePath = `{rojoProject.name}.rbxl`
 
-	stdio.write(`Building project {rojoProjectFilePath} into {builtProjectFilePath}...\n`)
-
-	local proc = process.spawn("rojo", { "build", rojoProjectFilePath, "-o", builtProjectFilePath })
+	print(`Building project {rojoProjectFilePath} into {builtProjectFilePath} with Rojo...\n`)
+	local proc = process.spawn(
+		`{process.env.HOME}/.aftman/bin/rojo`,
+		{ "build", rojoProjectFilePath, "--output", builtProjectFilePath }
+	)
 	assert(proc.ok, `Failed to build project [{builtProjectFilePath}]: {proc.stderr}`)
 
+	print(`Deserializing {builtProjectFilePath}...`)
 	local success, result = pcall(roblox.deserializePlace, fs.readFile(builtProjectFilePath))
 	assert(success, `Failed to deserialize built project [{builtProjectFilePath}]: {result}`)
 
@@ -170,6 +173,8 @@ end
 
 -- Main
 -- TODO: Flexibly run any script from a command line argument
+
+print(`Starting main...\n`)
 local TestService = game:GetService("TestService")
 local Source = TestService:FindFirstChild("Source")
 assert(Source, "game.TestService.Source not found")
@@ -180,4 +185,5 @@ assert(run, "game.TestService.Source.run not found")
 local func, err = loadScript(ReducedInstance.once(run))
 assert(func, err)
 
+print(`Running tests from game.TestService.Source.run...\n`)
 func()

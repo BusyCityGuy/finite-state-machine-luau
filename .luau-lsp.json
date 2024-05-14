@@ -1,0 +1,8 @@
+{
+  "luau-lsp.require.mode": "relativeToFile",
+  "luau-lsp.require.directoryAliases": {
+    "@lune/": "~/.lune/.typedefs/0.8.4/"
+  },
+  "luau-lsp.ignoreGlobs": ["**/_Index/**", "globalTypes.d.lua", "*Packages/**"],
+  "luau-lsp.types.roblox": true
+}

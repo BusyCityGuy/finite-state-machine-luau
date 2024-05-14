@@ -106,9 +106,12 @@ end
 local Signal = {}
 Signal.__index = Signal
 
-export type ClassType = typeof(setmetatable({} :: {
-	_handlerListHead: SignalConnection?,
-}, Signal))
+export type ClassType = typeof(setmetatable(
+	{} :: {
+		_handlerListHead: SignalConnection?,
+	},
+	Signal
+))
 
 function Signal.new(): ClassType
 	return setmetatable({
