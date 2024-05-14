@@ -99,13 +99,13 @@ jobs:
 
       - name: Analyze StateMachine with luau-lsp
         run: |
-          rojo sourcemap default.project.json --output sourcemap.json
+          ./scripts/sourcemap.sh default.project.json --output stateMachineSourcemap.json
           ./scripts/analyze.sh stateMachineSourcemap.json src/StateMachine
 
       - name: Analyze tests with luau-lsp
         run: |
-          rojo sourcemap default.project.json --output sourcemap.json
-          ./scripts/analyze.sh sourcemap.json src/TestService
+          ./scripts/sourcemap.sh default.project.json --output testSourcemap.json
+          ./scripts/analyze.sh testSourcemap.json src/TestService
 
       - name: Analyze Lune scripts with luau-lsp
         run: ./scripts/analyze.sh lune
