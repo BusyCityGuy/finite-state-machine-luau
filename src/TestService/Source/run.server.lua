@@ -1,4 +1,3 @@
-print("Hello from run.server.lua!")
 local TestService = game:GetService("TestService")
 
 local Jest = require(TestService.Dependencies.Jest)
@@ -11,12 +10,14 @@ local processServiceExists, ProcessService = pcall(function()
 	-- selene: allow(incorrect_standard_library_use)
 	return game:GetService("ProcessService")
 end)
+print(`ProcessService {processServiceExists and "exists" or "does not exist"}`)
 
-print("Running cli...")
+print("Running jest tests cli...")
 local status, result = runCLI(TestService.Source.Tests, {
 	verbose = false,
 	ci = false,
 }, { TestService.Source.Tests }):awaitStatus()
+print(`Jest tests completed with status {status}`)
 
 if status == "Rejected" then
 	print(result)
