@@ -170,6 +170,8 @@ end
 
 -- Main
 -- TODO: Flexibly run any script from a command line argument
+
+stdio.write(`Starting main...\n`)
 local TestService = game:GetService("TestService")
 local Source = TestService:FindFirstChild("Source")
 assert(Source, "game.TestService.Source not found")
@@ -180,4 +182,5 @@ assert(run, "game.TestService.Source.run not found")
 local func, err = loadScript(ReducedInstance.once(run))
 assert(func, err)
 
+stdio.write(`Running tests from game.TestService.Source.run...\n`)
 func()
