@@ -39,10 +39,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4.1.4
 
-      - name: Restore cached Aftman tools
+      - name: Restore cached Aftman tools and Lune typedefs
         uses: actions/cache@v4.0.2
         with:
-          path: ~/.aftman
+          path: |
+            ~/.aftman
+            ~/.lune
           key: tools-${{ hashFiles('aftman.toml') }}
 
       - name: Lint StateMachine
@@ -64,10 +66,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4.1.4
 
-      - name: Restore cached Aftman tools
+      - name: Restore cached Aftman tools and Lune typedefs
         uses: actions/cache@v4.0.2
         with:
-          path: ~/.aftman
+          path: |
+            ~/.aftman
+            ~/.lune
           key: tools-${{ hashFiles('aftman.toml') }}
 
       - name: Enforce StateMachine code style with StyLua
