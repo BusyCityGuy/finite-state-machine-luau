@@ -109,3 +109,24 @@ jobs:
 
       - name: Analyze Lune scripts with luau-lsp
         run: ./scripts/analyze.sh lune
+
+  # lune-org/lune is assumed to be included in the repository's aftman.toml file
+  testing:
+    name: Run jest tests with Lune
+    runs-on: ubuntu-latest
+    needs: [install-tools]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.1.4
+
+      - name: Restore cached Aftman tools and Lune typedefs
+        uses: actions/cache@v4.0.2
+        with:
+          path: |
+            ~/.aftman
+            ~/.lune
+          key: tools-${{ hashFiles('aftman.toml') }}
+
+      - name: Test with Lune
+        run: ./scripts/test.sh
