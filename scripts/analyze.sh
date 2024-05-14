@@ -10,14 +10,14 @@ if [ ! -f "$TYPES_FILE" ]; then
 fi
 
 if [ -n "$2" ]; then
-    luau-lsp analyze \
+    $HOME/.aftman/bin/luau-lsp analyze \
         --settings=$SETTINGS_FILE \
         --definitions=$TYPES_FILE \
         --sourcemap "$1" \
         --ignore "*Packages/**" \
         "$2"
 else
-    luau-lsp analyze \
+    $HOME/.aftman/bin/luau-lsp analyze \
         --settings=$SETTINGS_FILE \
         --definitions=$TYPES_FILE \
         --ignore "*Packages/**" \
