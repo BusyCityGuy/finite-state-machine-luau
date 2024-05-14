@@ -8,7 +8,7 @@ on:
 
 jobs:
   install-tools:
-    name: Install tools
+    name: Install tools and dependencies
     runs-on: ubuntu-latest
 
     steps:
@@ -21,12 +21,17 @@ jobs:
       - name: Setup Lune
         run: lune setup
 
-      - name: Cache Aftman tools and Lune typedefs
+      - name: Install dependencies with Wally
+        run: wally install
+
+      - name: Cache installed items
         uses: actions/cache@v4.0.2
         with:
           path: |
             ~/.aftman
             ~/.lune
+            Packages
+            DevPackages
           key: tools-${{ hashFiles('aftman.toml') }}
 
   # Kampfkarren/selene is assumed to be included in the repository's aftman.toml file
@@ -39,12 +44,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4.1.4
 
-      - name: Restore cached Aftman tools and Lune typedefs
+      - name: Restore installed items
         uses: actions/cache@v4.0.2
         with:
           path: |
             ~/.aftman
             ~/.lune
+            Packages
+            DevPackages
           key: tools-${{ hashFiles('aftman.toml') }}
 
       - name: Lint StateMachine
@@ -66,12 +73,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4.1.4
 
-      - name: Restore cached Aftman tools and Lune typedefs
+      - name: Restore installed items
         uses: actions/cache@v4.0.2
         with:
           path: |
             ~/.aftman
             ~/.lune
+            Packages
+            DevPackages
           key: tools-${{ hashFiles('aftman.toml') }}
 
       - name: Enforce StateMachine code style with StyLua
@@ -93,12 +102,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4.1.4
 
-      - name: Restore cached Aftman tools and Lune typedefs
+      - name: Restore installed items
         uses: actions/cache@v4.0.2
         with:
           path: |
             ~/.aftman
             ~/.lune
+            Packages
+            DevPackages
           key: tools-${{ hashFiles('aftman.toml') }}
 
       - name: Analyze StateMachine with luau-lsp
@@ -124,12 +135,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4.1.4
 
-      - name: Restore cached Aftman tools and Lune typedefs
+      - name: Restore installed items
         uses: actions/cache@v4.0.2
         with:
           path: |
             ~/.aftman
             ~/.lune
+            Packages
+            DevPackages
           key: tools-${{ hashFiles('aftman.toml') }}
 
       - name: Test with Lune
