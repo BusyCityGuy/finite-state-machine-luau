@@ -1,11 +1,11 @@
 --!nonstrict
 -- FIXME: Change to strict and fix type issues
 
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+-- local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TestService = game:GetService("TestService")
 
-local JestGlobals = require(TestService.Dependencies.JestGlobals)
 local Freeze = require(TestService.Dependencies.Freeze)
+local JestGlobals = require(TestService.Dependencies.JestGlobals)
 local Logger = require(ReplicatedStorage.Source.StateMachine.Modules.Logger)
 local Signal = require(ReplicatedStorage.Source.StateMachine.Modules.Signal)
 local StateMachine = require(ReplicatedStorage.Source.StateMachine)

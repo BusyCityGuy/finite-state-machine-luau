@@ -25,6 +25,7 @@ function ReducedInstance.once(instance: roblox.Instance): roblox.Instance
 	local self = setmetatable({
 		instance = instance,
 	}, {
+		-- selene: allow(shadowing)
 		__index = function(self, key): any?
 			local value = self.instance[key]
 			if type(value) == "function" then
@@ -51,6 +52,7 @@ function ReducedInstance.once(instance: roblox.Instance): roblox.Instance
 
 			return value
 		end,
+		-- selene: allow(shadowing)
 		__newindex = function(self, key, value)
 			self.instance[key] = value
 		end,
