@@ -19,6 +19,7 @@ if [ -n "$2" ]; then
         --sourcemap "$1" \
         --ignore "*Packages/**" \
         "$2"
+    echo "Analysis of $2 complete!"
 else
     echo "Beginning analysis on $1 with settings from $SETTINGS_FILE and global types from $TYPES_FILE..."
     $HOME/.aftman/bin/luau-lsp analyze \
@@ -26,6 +27,5 @@ else
         --definitions=$TYPES_FILE \
         --ignore "*Packages/**" \
         "$1"
+    echo "Analysis of $1 complete!"
 fi
-
-echo "Analysis complete!"

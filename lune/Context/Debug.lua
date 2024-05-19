@@ -5,7 +5,7 @@
 	On Roblox, it's locked behind a feature flag FFlagDebugLoadModule, which is not enabled by default.
 	In Lune, it doesn't exist at all, so this module creates the interface for it but is not implemented.
 	The _loader function needs to be overridden to be usable.
-	In this project, the `lune/runTests.lua` script implements and sets the _loader function.
+	In this project, the `lune/test.lua` script implements and sets the _loader function.
 --]]
 
 local Debug

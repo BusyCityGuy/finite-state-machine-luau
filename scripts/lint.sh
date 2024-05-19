@@ -6,4 +6,4 @@ echo "Beginning linting on $1..."
 
 $HOME/.aftman/bin/selene $1
 
-echo "Linting complete!"
+echo "Linting $1 complete!"
