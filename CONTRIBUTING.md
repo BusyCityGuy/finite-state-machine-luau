@@ -178,3 +178,7 @@ Alternatively, you can run individual steps yourself:
 > lune run analyze
 
 > lune run test
+
+There is an additional script available to fix formatting with StyLua, that does not run on GitHub:
+
+> lune run formatFix
