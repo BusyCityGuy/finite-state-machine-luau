@@ -60,7 +60,7 @@ local FINISH_HANDLER = to(FINISH_STATE)
 -- Done
 describe("new", function()
 	describe("should error iff given bad parameter type for", function()
-		it("initial state", function()
+		describe("initial state", function()
 			local eventsByName = {
 				[TO_X_EVENT] = {
 					canBeFinal = true,
@@ -80,19 +80,23 @@ describe("new", function()
 			}
 
 			local goodType = X_STATE
-
-			for _, badType in badTypes do
-				expect(function()
-					StateMachine.new(badType, eventsByName)
-				end).toThrow("Bad tuple index #1")
+			for i = 1, #badTypes do
+				local badType = badTypes[i]
+				it(`{i} bad: {typeof(badType)}`, function()
+					expect(function()
+						StateMachine.new(badType, eventsByName)
+					end).toThrow("Bad tuple index #1")
+				end)
 			end
 
-			expect(function()
-				StateMachine.new(goodType, eventsByName)
-			end).never.toThrow()
+			it(`good: {typeof(goodType)}`, function()
+				expect(function()
+					StateMachine.new(goodType, eventsByName)
+				end).never.toThrow()
+			end)
 		end)
 
-		it("events", function()
+		describe("events", function()
 			local goodEventsByName = {
 				[TO_X_EVENT] = {
 					canBeFinal = true,
@@ -114,18 +118,23 @@ describe("new", function()
 				},
 			}
 
-			for _, badType in badTypes do
-				expect(function()
-					StateMachine.new(X_STATE, badType)
-				end).toThrow("Bad tuple index #2")
+			for i = 1, #badTypes do
+				local badType = badTypes[i]
+				it(`{i} bad: {typeof(badType)}`, function()
+					expect(function()
+						StateMachine.new(X_STATE, badType)
+					end).toThrow("Bad tuple index #2")
+				end)
 			end
 
-			expect(function()
-				StateMachine.new(X_STATE, goodEventsByName)
-			end).never.toThrow()
+			it(`good: {typeof(goodEventsByName)}`, function()
+				expect(function()
+					StateMachine.new(X_STATE, goodEventsByName)
+				end).never.toThrow()
+			end)
 		end)
 
-		it("name", function()
+		describe("name", function()
 			local eventsByName = {
 				[TO_X_EVENT] = {
 					canBeFinal = true,
@@ -140,7 +149,6 @@ describe("new", function()
 			local badTypes: { any } = {
 				1,
 				true,
-				nil,
 				{},
 			}
 
@@ -150,20 +158,26 @@ describe("new", function()
 				"",
 			}
 
-			for _, badType in badTypes do
-				expect(function()
-					StateMachine.new(X_STATE, eventsByName, badType)
-				end).toThrow("Bad tuple index #3")
+			for i = 1, #badTypes do
+				local badType = badTypes[i]
+				it(`{i} bad: {typeof(badType)}`, function()
+					expect(function()
+						StateMachine.new(X_STATE, eventsByName, badType)
+					end).toThrow("Bad tuple index #3")
+				end)
 			end
 
-			for _, goodType in goodTypes do
-				expect(function()
-					StateMachine.new(X_STATE, eventsByName, goodType)
-				end).never.toThrow()
+			for i = 1, #goodTypes do
+				local goodType = goodTypes[i]
+				it(`{i} good: {typeof(goodType)}`, function()
+					expect(function()
+						StateMachine.new(X_STATE, eventsByName, goodType)
+					end).never.toThrow()
+				end)
 			end
 		end)
 
-		it("log level", function()
+		describe("log level", function()
 			local eventsByName = {
 				[TO_X_EVENT] = {
 					canBeFinal = true,
@@ -178,7 +192,6 @@ describe("new", function()
 			local badTypes: { any } = {
 				1,
 				true,
-				nil,
 				{},
 				"bad type",
 			}
@@ -191,21 +204,27 @@ describe("new", function()
 				StateMachine.Logger.LogLevel.Debug,
 			}
 
-			for _, badType in badTypes do
-				expect(function()
-					StateMachine.new(X_STATE, eventsByName, nil, badType)
-				end).toThrow("Bad tuple index #4")
+			for i = 1, #badTypes do
+				local badType = badTypes[i]
+				it(`{i} bad: {typeof(badType)}`, function()
+					expect(function()
+						StateMachine.new(X_STATE, eventsByName, nil, badType)
+					end).toThrow("Bad tuple index #4")
+				end)
 			end
 
-			for _, goodType: nil | Logger.LogLevel in goodTypes do
-				expect(function()
-					StateMachine.new(X_STATE, eventsByName, nil, goodType)
-				end).never.toThrow()
+			for i = 1, #goodTypes do
+				local goodType: nil | Logger.LogLevel = goodTypes[i]
+				it(`{i} good: {typeof(goodType)}`, function()
+					expect(function()
+						StateMachine.new(X_STATE, eventsByName, nil, goodType)
+					end).never.toThrow()
+				end)
 			end
 		end)
 	end)
 
-	it("should return a new state machine", function()
+	it("should return a new unique state machine", function()
 		local initialState = X_STATE
 		local eventsByName = {
 			[TO_X_EVENT] = {
@@ -226,117 +245,119 @@ describe("new", function()
 		expect(stateMachine1 == stateMachine2).toBe(false)
 	end)
 
-	it("should set initial state", function()
-		local initialState = X_STATE
-		local eventsByName = {
-			[TO_X_EVENT] = {
-				canBeFinal = true,
-				from = {
-					[X_STATE] = {
-						beforeAsync = TO_X_HANDLER,
+	describe("should initialize", function()
+		it("initial state", function()
+			local initialState = X_STATE
+			local eventsByName = {
+				[TO_X_EVENT] = {
+					canBeFinal = true,
+					from = {
+						[X_STATE] = {
+							beforeAsync = TO_X_HANDLER,
+						},
 					},
 				},
-			},
-		}
+			}
 
-		local stateMachine = StateMachine.new(initialState, eventsByName)
-		expect(stateMachine._currentState).toBe(initialState)
-	end)
+			local stateMachine = StateMachine.new(initialState, eventsByName)
+			expect(stateMachine._currentState).toBe(initialState)
+		end)
 
-	it("should set valid event names by state", function()
-		local eventsByName = {
-			[TO_Y_EVENT] = {
-				canBeFinal = false,
-				from = {
-					[X_STATE] = {
-						beforeAsync = TO_Y_HANDLER,
-					},
-					[Y_STATE] = {
-						beforeAsync = TO_Y_HANDLER,
-					},
-				},
-			},
-			[TO_X_EVENT] = {
-				canBeFinal = false,
-				from = {
-					[Y_STATE] = {
-						beforeAsync = TO_X_HANDLER,
+		it("valid event names by state", function()
+			local eventsByName = {
+				[TO_Y_EVENT] = {
+					canBeFinal = false,
+					from = {
+						[X_STATE] = {
+							beforeAsync = TO_Y_HANDLER,
+						},
+						[Y_STATE] = {
+							beforeAsync = TO_Y_HANDLER,
+						},
 					},
 				},
-			},
-		}
-
-		local stateMachine = StateMachine.new(X_STATE, eventsByName)
-		local validEventNamesFromX = stateMachine._validEventNamesByState[X_STATE]
-		local validEventNamesFromY = stateMachine._validEventNamesByState[Y_STATE]
-
-		expect(validEventNamesFromX).toEqual(expect.any("table"))
-		expect(validEventNamesFromY).toEqual(expect.any("table"))
-
-		expect(Dict.count(validEventNamesFromX)).toBe(1)
-		expect(Dict.includes(validEventNamesFromX, TO_Y_EVENT)).toBe(true)
-
-		expect(Dict.count(validEventNamesFromY)).toBe(2)
-		expect(Dict.includes(validEventNamesFromY, TO_X_EVENT)).toBe(true)
-		expect(Dict.includes(validEventNamesFromY, TO_Y_EVENT)).toBe(true)
-	end)
-
-	it("should set handlers by event name", function()
-		local eventsByName = {
-			[TO_Y_EVENT] = {
-				canBeFinal = false,
-				from = {
-					[X_STATE] = {
-						beforeAsync = TO_Y_HANDLER,
-					},
-					[Y_STATE] = {
-						beforeAsync = TO_Y_HANDLER,
+				[TO_X_EVENT] = {
+					canBeFinal = false,
+					from = {
+						[Y_STATE] = {
+							beforeAsync = TO_X_HANDLER,
+						},
 					},
 				},
-			},
-			[TO_X_EVENT] = {
-				canBeFinal = false,
-				from = {
-					[Y_STATE] = {
-						beforeAsync = TO_X_HANDLER,
+			}
+
+			local stateMachine = StateMachine.new(X_STATE, eventsByName)
+			local validEventNamesFromX = stateMachine._validEventNamesByState[X_STATE]
+			local validEventNamesFromY = stateMachine._validEventNamesByState[Y_STATE]
+
+			expect(validEventNamesFromX).toEqual(expect.any("table"))
+			expect(validEventNamesFromY).toEqual(expect.any("table"))
+
+			expect(Dict.count(validEventNamesFromX)).toBe(1)
+			expect(Dict.includes(validEventNamesFromX, TO_Y_EVENT)).toBe(true)
+
+			expect(Dict.count(validEventNamesFromY)).toBe(2)
+			expect(Dict.includes(validEventNamesFromY, TO_X_EVENT)).toBe(true)
+			expect(Dict.includes(validEventNamesFromY, TO_Y_EVENT)).toBe(true)
+		end)
+
+		it("handlers by event name", function()
+			local eventsByName = {
+				[TO_Y_EVENT] = {
+					canBeFinal = false,
+					from = {
+						[X_STATE] = {
+							beforeAsync = TO_Y_HANDLER,
+						},
+						[Y_STATE] = {
+							beforeAsync = TO_Y_HANDLER,
+						},
 					},
 				},
-			},
-		}
-
-		local stateMachine = StateMachine.new(X_STATE, eventsByName)
-		local handlers = stateMachine._handlersByEventName
-
-		expect(Dict.count(handlers)).toBe(2)
-		expect(handlers[TO_X_EVENT]).toEqual(expect.any("function"))
-		expect(handlers[TO_Y_EVENT]).toEqual(expect.any("function"))
-	end)
-
-	it("should make signals available", function()
-		local eventsByName = {
-			[TO_X_EVENT] = {
-				canBeFinal = true,
-				from = {
-					[X_STATE] = {
-						beforeAsync = TO_X_HANDLER,
+				[TO_X_EVENT] = {
+					canBeFinal = false,
+					from = {
+						[Y_STATE] = {
+							beforeAsync = TO_X_HANDLER,
+						},
 					},
 				},
-			},
-		}
+			}
 
-		local stateMachine = StateMachine.new(X_STATE, eventsByName)
+			local stateMachine = StateMachine.new(X_STATE, eventsByName)
+			local handlers = stateMachine._handlersByEventName
 
-		expect(stateMachine[BEFORE_EVENT_SIGNAL]).never.toBeNil()
-		expect(stateMachine[LEAVING_STATE_SIGNAL]).never.toBeNil()
-		expect(stateMachine[STATE_ENTERED_SIGNAL]).never.toBeNil()
-		expect(stateMachine[AFTER_EVENT_SIGNAL]).never.toBeNil()
-		expect(stateMachine[FINISHED_SIGNAL]).never.toBeNil()
+			expect(Dict.count(handlers)).toBe(2)
+			expect(handlers[TO_X_EVENT]).toEqual(expect.any("function"))
+			expect(handlers[TO_Y_EVENT]).toEqual(expect.any("function"))
+		end)
+
+		it("signals", function()
+			local eventsByName = {
+				[TO_X_EVENT] = {
+					canBeFinal = true,
+					from = {
+						[X_STATE] = {
+							beforeAsync = TO_X_HANDLER,
+						},
+					},
+				},
+			}
+
+			local stateMachine = StateMachine.new(X_STATE, eventsByName)
+
+			expect(stateMachine[BEFORE_EVENT_SIGNAL]).never.toBeNil()
+			expect(stateMachine[LEAVING_STATE_SIGNAL]).never.toBeNil()
+			expect(stateMachine[STATE_ENTERED_SIGNAL]).never.toBeNil()
+			expect(stateMachine[AFTER_EVENT_SIGNAL]).never.toBeNil()
+			expect(stateMachine[FINISHED_SIGNAL]).never.toBeNil()
+		end)
 	end)
 end)
 
 -- Done
 describe("handle", function()
-	it("should error given a bad event name", function()
+	it("should error iff given a bad event name", function()
 		local nonexistentEventName = "nonexistent"
 		local eventsByName = {
 			[TO_X_EVENT] = {
@@ -358,6 +379,8 @@ describe("handle", function()
 			{},
 		}
 
+		local goodType = TO_X_EVENT
+
 		for _, badType in badTypes do
 			expect(function()
 				stateMachine:handle(badType)
@@ -367,6 +390,10 @@ describe("handle", function()
 		expect(function()
 			stateMachine:handle(nonexistentEventName)
 		end).toThrow(`Invalid event name passed to handle: {nonexistentEventName}`)
+
+		expect(function()
+			StateMachine.new(goodType, eventsByName)
+		end).never.toThrow()
 	end)
 
 	describe("should fire signals", function()
