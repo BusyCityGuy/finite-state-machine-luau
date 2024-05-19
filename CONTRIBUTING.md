@@ -148,3 +148,33 @@ You need to set the `FFlagEnableLoadModule` value to `true`. Be sure to restart 
 | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | CLI (recommended) | `lune run test`                                                                                                                                                                                |
 | Roblox Studio     | Open the test place file `StateMachine-Test.rbxl` [built in the above step](#build-the-project) in Roblox Studio and run the place (server only). The output widget will show the test results. |
+
+
+### Continuous Integration (CI)
+
+CI checks are set up to run on pull requests. These checks must pass before merging, including:
+
+1. `lint` with selene
+1. `format check` with StyLua
+1. `analyze` with luau-lsp
+1. `test` with jest running in Lune
+
+#### Running CI Locally
+
+To run the same CI checks locally that would run on GitHub, a number of Lune scripts are provided.
+
+From the project directory, you can run the following:
+
+> lune run ci
+
+This will run all the same checks that would run on GitHub.
+
+Alternatively, you can run individual steps yourself:
+
+> lune run lint
+
+> lune run formatCheck
+
+> lune run analyze
+
+> lune run test

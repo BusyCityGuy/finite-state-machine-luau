@@ -7,5 +7,5 @@
 globaltypes.d.lua
 Packages
 DevPackages
-sourcemap.json
+*sourcemap.json
 settings.json

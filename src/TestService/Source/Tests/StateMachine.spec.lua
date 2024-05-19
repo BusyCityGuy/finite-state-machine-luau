@@ -675,7 +675,7 @@ describe("handle", function()
 			local timeoutThread
 			local mainThread = coroutine.running()
 			local handledEventName = FINISH_EVENT
-			local expectedAfterState = FINISH_STATE
+			-- local expectedAfterState = FINISH_STATE
 			local receivedParameters
 			local stateMachine
 			local eventsByName = {
