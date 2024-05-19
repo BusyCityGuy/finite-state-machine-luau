@@ -4,6 +4,6 @@ set -e
 
 echo "Starting test runner..."
 
-$HOME/.aftman/bin/lune run runTests
+$HOME/.aftman/bin/lune run test
 
 echo "Test runner complete!"

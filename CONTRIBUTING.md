@@ -146,5 +146,5 @@ You need to set the `FFlagEnableLoadModule` value to `true`. Be sure to restart 
 
 | Method            | Instructions                                                                                                                                                                                   |
 | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| CLI (recommended) | `lune run runTests`                                                                                                                                                                            |
+| CLI (recommended) | `lune run test`                                                                                                                                                                                |
 | Roblox Studio     | Open the test place file `StateMachine-Test.rbxl` [built in the above step](#build-the-project) in Roblox Studio and run the place (server only). The output widget will show the test results. |

@@ -7,7 +7,7 @@
 	Since the parent folder is named `lune`, the `lune` cli will automatically look in this directory for scripts to run.
 
 	Usage (from project directory):
-		lune run runTests [project.json]
+		lune run test [project.json]
 --]]
 
 local fs = require("@lune/fs")
@@ -22,7 +22,7 @@ local DateTime = require("Context/DateTime")
 local Debug = require("Context/Debug")
 local Runtime = require("Utils/Runtime")
 
--- DEPENDENTS: [runTests.lua, Jest]
+-- DEPENDENTS: [test.lua, Jest]
 local ReducedInstance = require("Utils/ReducedInstance")
 
 type RojoProject = {
@@ -120,7 +120,7 @@ local gameWithContext = setmetatable({
 	end,
 }, { __index = game })
 
--- DEPENDENTS: [runTests.lua, Jest]
+-- DEPENDENTS: [test.lua, Jest]
 local function loadScript(script: roblox.Instance): (((...any) -> ...any)?, string?)
 	script = ReducedInstance.once(script)
 	if not script:IsA("LuaSourceContainer") then
