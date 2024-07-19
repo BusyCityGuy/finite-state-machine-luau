@@ -9,6 +9,7 @@
 		lune run ci
 --]]
 
+local Path = require("Utils/Path")
 local process = require("@lune/process")
 local stdio = require("@lune/stdio")
 local task = require("@lune/task")
@@ -27,11 +28,13 @@ local numTasksCompleted = 0
 local mainThread = coroutine.running()
 
 local function runLuneCommand(command: string)
-	local home = process.env.HOME
-	local proc = process.spawn(`{home}/.aftman/bin/lune`, { "run", command })
+	local root = process.env.HOME or process.env.USERPROFILE
+	local lunePath = Path.join(root, ".aftman", "bin", "lune")
+	local proc = process.spawn(lunePath, { "run", command })
+
 	print(proc.stdout)
 	if not proc.ok then
-		stdio.ewrite(proc.stderr)
+		stdio.ewrite(tostring(proc.stderr))
 		numErrors += 1
 	end
 
@@ -42,7 +45,7 @@ local function runLuneCommand(command: string)
 end
 
 local function runAllLuneCommands()
-	print(`Fixing format for {NUM_EXPECTED_TASKS} paths:`)
+	print(`Running {NUM_EXPECTED_TASKS} commands:`)
 	for _, path in ipairs(LUNE_COMMANDS) do
 		task.spawn(runLuneCommand, path)
 	end

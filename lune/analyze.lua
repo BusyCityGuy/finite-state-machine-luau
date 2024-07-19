@@ -9,18 +9,20 @@
 		lune run analyze
 --]]
 
+local Path = require("Utils/Path")
 local process = require("@lune/process")
+local runShellScript = require("Utils/runShellScript")
 local stdio = require("@lune/stdio")
 local task = require("@lune/task")
 
 local ANALYZE_PATHS: { { path: string, project: string?, sourceMap: string? } } = {
 	{
-		path = "src/StateMachine",
+		path = Path.join("src", "StateMachine"),
 		project = "default.project.json",
 		sourceMap = "stateMachineSourcemap.json",
 	},
 	{
-		path = "src/TestService",
+		path = Path.join("src", "TestService"),
 		project = "test.project.json",
 		sourceMap = "testSourcemap.json",
 	},
@@ -38,17 +40,20 @@ local numTasksCompleted = 0
 local mainThread = coroutine.running()
 
 local function buildSourceMap(projectFilePath: string, sourceMapFilePath: string)
-	local proc = process.spawn("./scripts/sourcemap.sh", { projectFilePath, sourceMapFilePath })
+	local sourcemapScriptPath = Path.join(".", "scripts", "sourcemap.sh")
+	local proc = runShellScript(sourcemapScriptPath, { projectFilePath, sourceMapFilePath })
 	print(proc.stdout)
 	assert(proc.ok, proc.stderr)
 end
 
 local function analyzePath(path: string, sourceMap: string?)
+	local analyzeScriptPath = Path.join(".", "scripts", "analyze.sh")
 	local proc
+
 	if sourceMap then
-		proc = process.spawn("./scripts/analyze.sh", { sourceMap, path })
+		proc = runShellScript(analyzeScriptPath, { sourceMap, path })
 	else
-		proc = process.spawn("./scripts/analyze.sh", { path })
+		proc = runShellScript(analyzeScriptPath, { path })
 	end
 
 	print(proc.stdout)
@@ -67,7 +72,7 @@ local function analyzeAllPaths()
 			end)
 
 			if not success then
-				stdio.ewrite(errorMessage :: string)
+				stdio.ewrite(tostring(errorMessage))
 				numErrors += 1
 			end
 

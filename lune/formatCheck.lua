@@ -11,13 +11,15 @@
 		lune run formatCheck
 --]]
 
+local Path = require("Utils/Path")
 local process = require("@lune/process")
+local runShellScript = require("Utils/runShellScript")
 local stdio = require("@lune/stdio")
 local task = require("@lune/task")
 
 local FORMAT_PATHS = {
-	"src/StateMachine",
-	"src/TestService",
+	Path.join("src", "StateMachine"),
+	Path.join("src", "TestService"),
 	"lune",
 }
 
@@ -28,10 +30,12 @@ local numTasksCompleted = 0
 local mainThread = coroutine.running()
 
 local function checkFormatForPath(path: string)
-	local proc = process.spawn("./scripts/formatCheck.sh", { path })
+	local formatCheckScriptPath = Path.join(".", "scripts", "formatCheck.sh")
+	local proc = runShellScript(formatCheckScriptPath, { path })
+
 	print(proc.stdout)
 	if not proc.ok then
-		stdio.ewrite(proc.stderr)
+		stdio.ewrite(tostring(proc.stderr))
 		numErrors += 1
 	end
 
