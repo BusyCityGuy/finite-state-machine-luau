@@ -9,13 +9,15 @@
 		lune run lint
 --]]
 
+local Path = require("Utils/Path")
 local process = require("@lune/process")
+local runShellScript = require("Utils/runShellScript")
 local stdio = require("@lune/stdio")
 local task = require("@lune/task")
 
 local LINT_PATHS = {
-	"src/StateMachine",
-	"src/TestService",
+	Path.join("src", "StateMachine"),
+	Path.join("src", "TestService"),
 	"lune",
 }
 
@@ -26,10 +28,12 @@ local numTasksCompleted = 0
 local mainThread = coroutine.running()
 
 local function lintPath(path: string)
-	local proc = process.spawn("./scripts/lint.sh", { path })
+	local lintScriptPath = Path.join("scripts", "lint.sh")
+	local proc = runShellScript(lintScriptPath, { path })
+
 	print(proc.stdout)
 	if not proc.ok then
-		stdio.ewrite(proc.stderr)
+		stdio.ewrite(tostring(proc.stderr))
 		numErrors += 1
 	end
 

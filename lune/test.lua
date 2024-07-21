@@ -25,6 +25,9 @@ local Runtime = require("Utils/Runtime")
 -- DEPENDENTS: [test.lua, Jest]
 local ReducedInstance = require("Utils/ReducedInstance")
 
+-- DEPENDENTS: [test.lua]
+local Path = require("Utils/Path")
+
 type RojoProject = {
 	name: string,
 	tree: any,
@@ -48,12 +51,11 @@ end
 local function buildProject(rojoProjectFilePath: string)
 	local rojoProject = readRojoProject(rojoProjectFilePath)
 	local builtProjectFilePath = `{rojoProject.name}.rbxl`
+	local root = process.env.HOME or process.env.USERPROFILE
+	local rojoPath = Path.join(root, ".aftman", "bin", "rojo")
 
 	print(`Building project {rojoProjectFilePath} into {builtProjectFilePath} with Rojo...\n`)
-	local proc = process.spawn(
-		`{process.env.HOME}/.aftman/bin/rojo`,
-		{ "build", rojoProjectFilePath, "--output", builtProjectFilePath }
-	)
+	local proc = process.spawn(rojoPath, { "build", rojoProjectFilePath, "--output", builtProjectFilePath })
 	assert(proc.ok, `Failed to build project [{builtProjectFilePath}]: {proc.stderr}`)
 
 	print(`Deserializing {builtProjectFilePath}...`)
