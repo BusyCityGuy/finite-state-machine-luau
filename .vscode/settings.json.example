@@ -1,7 +1,7 @@
 {
   "luau-lsp.require.mode": "relativeToFile",
   "luau-lsp.require.directoryAliases": {
-    "@lune/": "~/.lune/.typedefs/0.8.4/"
+    "@lune/": "~/.lune/.typedefs/0.8.6/"
   },
   "luau-lsp.sourcemap.rojoProjectFile": "test.project.json",
   "luau-lsp.ignoreGlobs": [
@@ -9,5 +9,11 @@
     "**/*.d.lua",
     "*Packages/**"
   ],
-  "cSpell.words": ["aftman", "rbxl", "rojo"]
+  "cSpell.words": [
+    "aftman",
+    "ewrite",
+    "rbxl",
+    "rojo",
+    "typedefs"
+  ]
 }
