@@ -6,7 +6,7 @@
   "luau-lsp.sourcemap.rojoProjectFile": "test.project.json",
   "luau-lsp.ignoreGlobs": [
     "**/_Index/**",
-    "**/*.d.lua",
+    "**/*.d.luau",
     "*Packages/**"
   ],
   "cSpell.words": ["aftman", "rbxl", "rojo"]
