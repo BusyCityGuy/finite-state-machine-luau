@@ -346,6 +346,7 @@ describe("new", function()
 
 			local stateMachine = StateMachine.new(X_STATE, eventsByName)
 
+			-- FIXME: Can't use toBeInstanceOf because of some weird behavior with ReducedInstance for running tests in lune
 			expect(stateMachine[BEFORE_EVENT_SIGNAL]).never.toBeNil()
 			expect(stateMachine[LEAVING_STATE_SIGNAL]).never.toBeNil()
 			expect(stateMachine[STATE_ENTERED_SIGNAL]).never.toBeNil()
@@ -436,12 +437,12 @@ describe("handle", function()
 			end
 
 			stateMachine:handle(FINISH_EVENT)
-		end, 500)
+		end, 50)
 
 		describe(`with the correct parameters and state`, function()
 			local initialState = X_STATE
 			local variadicArgs = { "test", false, nil, 3.5 }
-			local timeout = 0.5
+			local timeout = 50
 			local handledEventName = TO_Y_EVENT
 			local receivedParameters
 			local eventsByName = {
@@ -478,123 +479,106 @@ describe("handle", function()
 				stateMachine = StateMachine.new(initialState, eventsByName)
 			end)
 
-			it(BEFORE_EVENT_SIGNAL, function()
-				local mainThread = coroutine.running()
-				local timeoutThread = task.delay(timeout, function()
-					coroutine.resume(mainThread, true)
-				end)
-
-				local signalConnection = stateMachine[BEFORE_EVENT_SIGNAL]:Connect(function(...)
+			it(BEFORE_EVENT_SIGNAL, function(_, done)
+				local signalConnection
+				signalConnection = stateMachine[BEFORE_EVENT_SIGNAL]:Connect(function(...)
+					signalConnection:Disconnect()
 					receivedParameters = { ... }
-					task.cancel(timeoutThread)
-					coroutine.resume(mainThread, false)
+					xpcall(function()
+						expect(#receivedParameters).toBe(2)
+						expect(receivedParameters[1]).toBe(handledEventName)
+						expect(receivedParameters[2]).toBe(initialState)
+						expect(stateMachine._currentState).toBe(initialState)
+						done()
+					end, function(err)
+						done(err)
+					end)
 				end)
 
 				stateMachine:handle(handledEventName, table.unpack(variadicArgs))
+			end, timeout)
 
-				local didTimeOut = coroutine.yield(mainThread)
-				signalConnection:Disconnect()
-				expect(didTimeOut).toBe(false)
-				expect(#receivedParameters).toBe(2)
-				expect(receivedParameters[1]).toBe(handledEventName)
-				expect(receivedParameters[2]).toBe(initialState)
-				expect(stateMachine._currentState).toBe(initialState)
-			end)
-
-			it(LEAVING_STATE_SIGNAL, function()
+			it(LEAVING_STATE_SIGNAL, function(_, done)
 				local expectedAfterState = Y_STATE
-				local mainThread = coroutine.running()
-				local timeoutThread = task.delay(timeout, function()
-					coroutine.resume(mainThread, true)
-				end)
 
-				local signalConnection = stateMachine[LEAVING_STATE_SIGNAL]:Connect(function(...)
+				local signalConnection
+				signalConnection = stateMachine[LEAVING_STATE_SIGNAL]:Connect(function(...)
+					signalConnection:Disconnect()
 					receivedParameters = { ... }
-					task.cancel(timeoutThread)
-					coroutine.resume(mainThread, false)
+					xpcall(function()
+						expect(#receivedParameters).toBe(2)
+						expect(receivedParameters[1]).toBe(initialState)
+						expect(receivedParameters[2]).toBe(expectedAfterState)
+						expect(stateMachine._currentState).toBe(initialState)
+						done()
+					end, function(err)
+						done(err)
+					end)
 				end)
 
 				stateMachine:handle(handledEventName, table.unpack(variadicArgs))
+			end, timeout)
 
-				local didTimeOut = coroutine.yield(mainThread)
-				signalConnection:Disconnect()
-				expect(didTimeOut).toBe(false)
-				expect(#receivedParameters).toBe(2)
-				expect(receivedParameters[1]).toBe(initialState)
-				expect(receivedParameters[2]).toBe(expectedAfterState)
-				expect(stateMachine._currentState).toBe(initialState)
-			end)
-
-			it(STATE_ENTERED_SIGNAL, function()
+			it(STATE_ENTERED_SIGNAL, function(_, done)
 				local expectedAfterState = Y_STATE
-				local mainThread = coroutine.running()
-				local timeoutThread = task.delay(timeout, function()
-					coroutine.resume(mainThread, true)
-				end)
 
-				local signalConnection = stateMachine[STATE_ENTERED_SIGNAL]:Connect(function(...)
+				local signalConnection
+				signalConnection = stateMachine[STATE_ENTERED_SIGNAL]:Connect(function(...)
+					signalConnection:Disconnect()
 					receivedParameters = { ... }
-					task.cancel(timeoutThread)
-					coroutine.resume(mainThread, false)
+					xpcall(function()
+						expect(#receivedParameters).toBe(2)
+						expect(receivedParameters[1]).toBe(expectedAfterState)
+						expect(receivedParameters[2]).toBe(initialState)
+						expect(stateMachine._currentState).toBe(expectedAfterState)
+						done()
+					end, function(err)
+						done(err)
+					end)
 				end)
 
 				stateMachine:handle(handledEventName, table.unpack(variadicArgs))
+			end, timeout)
 
-				local didTimeOut = coroutine.yield(mainThread)
-				signalConnection:Disconnect()
-				expect(didTimeOut).toBe(false)
-				expect(#receivedParameters).toBe(2)
-				expect(receivedParameters[1]).toBe(expectedAfterState)
-				expect(receivedParameters[2]).toBe(initialState)
-				expect(stateMachine._currentState).toBe(expectedAfterState)
-			end)
-
-			it(AFTER_EVENT_SIGNAL, function()
+			it(AFTER_EVENT_SIGNAL, function(_, done)
 				local expectedAfterState = Y_STATE
-				local mainThread = coroutine.running()
-				local timeoutThread = task.delay(timeout, function()
-					coroutine.resume(mainThread, true)
-				end)
 
-				local signalConnection = stateMachine[AFTER_EVENT_SIGNAL]:Connect(function(...)
+				local signalConnection
+				signalConnection = stateMachine[AFTER_EVENT_SIGNAL]:Connect(function(...)
+					signalConnection:Disconnect()
 					receivedParameters = { ... }
-					task.cancel(timeoutThread)
-					coroutine.resume(mainThread, false)
+					xpcall(function()
+						expect(#receivedParameters).toBe(3)
+						expect(receivedParameters[1]).toBe(handledEventName)
+						expect(receivedParameters[2]).toBe(expectedAfterState)
+						expect(receivedParameters[3]).toBe(initialState)
+						expect(stateMachine._currentState).toBe(expectedAfterState)
+						done()
+					end, function(err)
+						done(err)
+					end)
 				end)
 
 				stateMachine:handle(handledEventName, table.unpack(variadicArgs))
+			end, timeout)
 
-				local didTimeOut = coroutine.yield(mainThread)
-				signalConnection:Disconnect()
-				expect(didTimeOut).toBe(false)
-				expect(#receivedParameters).toBe(3)
-				expect(receivedParameters[1]).toBe(handledEventName)
-				expect(receivedParameters[2]).toBe(expectedAfterState)
-				expect(receivedParameters[3]).toBe(initialState)
-				expect(stateMachine._currentState).toBe(expectedAfterState)
-			end)
-
-			it(FINISHED_SIGNAL, function()
-				local mainThread = coroutine.running()
-				local timeoutThread = task.delay(timeout, function()
-					coroutine.resume(mainThread, true)
-				end)
-
-				local signalConnection = stateMachine[FINISHED_SIGNAL]:Connect(function(...)
+			it(FINISHED_SIGNAL, function(_, done)
+				local signalConnection
+				signalConnection = stateMachine[FINISHED_SIGNAL]:Connect(function(...)
+					signalConnection:Disconnect()
 					receivedParameters = { ... }
-					task.cancel(timeoutThread)
-					coroutine.resume(mainThread, false)
+					xpcall(function()
+						expect(#receivedParameters).toBe(1)
+						expect(receivedParameters[1]).toBe(initialState)
+						expect(stateMachine._currentState).toBe(FINISH_STATE)
+						done()
+					end, function(err)
+						done(err)
+					end)
 				end)
 
 				stateMachine:handle(FINISH_EVENT, table.unpack(variadicArgs))
-
-				local didTimeOut = coroutine.yield(mainThread)
-				signalConnection:Disconnect()
-				expect(didTimeOut).toBe(false)
-				expect(#receivedParameters).toBe(1)
-				expect(receivedParameters[1]).toBe(initialState)
-				expect(stateMachine._currentState).toBe(FINISH_STATE)
-			end)
+			end, timeout)
 		end)
 	end)
 
@@ -878,7 +862,7 @@ describe("handle", function()
 		expect(errorMessage).toEqual(
 			expect.stringContaining(`Attempt to process event {FINISH_EVENT} after the state machine already finished`)
 		)
-	end)
+	end, 50)
 end)
 
 -- Placeholder
