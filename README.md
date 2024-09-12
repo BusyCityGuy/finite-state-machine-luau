@@ -53,7 +53,7 @@ A simple state machine diagram for a light switch may look like this, where
 
 ![Screen Shot 2023-12-14 at 18 04 33](https://github.com/BusyCityGuy/finite-state-machine-luau/assets/55513323/3d5b2118-91ea-4427-ac2d-688fb0094d1f)
 
-```lua
+```luau
 local LightState = {
 	On = "On",
 	Off = "Off",

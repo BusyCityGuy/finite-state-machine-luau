@@ -2,12 +2,12 @@
 
 set -e
 
-TYPES_FILE=globalTypes.d.lua
+TYPES_FILE=globalTypes.d.luau
 SETTINGS_FILE=.luau-lsp.json
 
 if [ ! -f "$TYPES_FILE" ]; then
     echo "Fetching global types..."
-    curl https://raw.githubusercontent.com/JohnnyMorganz/luau-lsp/main/scripts/globalTypes.d.lua > $TYPES_FILE
+    curl https://raw.githubusercontent.com/JohnnyMorganz/luau-lsp/main/scripts/globalTypes.d.luau > $TYPES_FILE
     echo "Wrote global types to $TYPES_FILE"
 fi
 
