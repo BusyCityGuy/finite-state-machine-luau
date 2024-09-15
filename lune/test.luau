@@ -52,7 +52,7 @@ local function buildProject(rojoProjectFilePath: string)
 	local rojoProject = readRojoProject(rojoProjectFilePath)
 	local builtProjectFilePath = `{rojoProject.name}.rbxl`
 	local root = process.env.HOME or process.env.USERPROFILE
-	local rojoPath = Path.join(root, ".aftman", "bin", "rojo")
+	local rojoPath = Path.join(root, ".rokit", "bin", "rojo")
 
 	print(`Building project {rojoProjectFilePath} into {builtProjectFilePath} with Rojo...\n`)
 	local proc = process.spawn(rojoPath, { "build", rojoProjectFilePath, "--output", builtProjectFilePath })

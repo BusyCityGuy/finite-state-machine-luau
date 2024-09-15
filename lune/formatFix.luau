@@ -30,7 +30,7 @@ local mainThread = coroutine.running()
 
 local function fixFormatForPath(path: string)
 	local root = process.env.HOME or process.env.USERPROFILE
-	local styluaPath = Path.join(root, ".aftman", "bin", "stylua")
+	local styluaPath = Path.join(root, ".rokit", "bin", "stylua")
 	local proc = process.spawn(styluaPath, { path })
 
 	print(proc.stdout)

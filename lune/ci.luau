@@ -29,7 +29,7 @@ local mainThread = coroutine.running()
 
 local function runLuneCommand(command: string)
 	local root = process.env.HOME or process.env.USERPROFILE
-	local lunePath = Path.join(root, ".aftman", "bin", "lune")
+	local lunePath = Path.join(root, ".rokit", "bin", "lune")
 	local proc = process.spawn(lunePath, { "run", command })
 
 	print(proc.stdout)
