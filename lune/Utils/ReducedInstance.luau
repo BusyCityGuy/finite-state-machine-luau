@@ -17,9 +17,9 @@ ReducedInstance._cache = {}
 function ReducedInstance.once(instance: roblox.Instance): roblox.Instance
 	assert(instance, "Instance is nil")
 
-	local fullName = instance:GetFullName()
-	if ReducedInstance._cache[fullName] then
-		return ReducedInstance._cache[fullName]
+	local debugId = instance:GetDebugId()
+	if ReducedInstance._cache[debugId] then
+		return ReducedInstance._cache[debugId]
 	end
 
 	local self = setmetatable({
@@ -59,7 +59,7 @@ function ReducedInstance.once(instance: roblox.Instance): roblox.Instance
 		__metatable = false,
 	})
 
-	ReducedInstance._cache[fullName] = self
+	ReducedInstance._cache[debugId] = self
 
 	return (self :: any) :: roblox.Instance
 end
