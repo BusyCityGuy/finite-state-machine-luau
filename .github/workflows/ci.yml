@@ -15,8 +15,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4.1.7
 
-      - name: Install Aftman
-        uses: ok-nick/setup-aftman@v0.4.2
+      - name: Install Rokit
+        uses: CompeyDev/setup-rokit@v0.1.2
 
       - name: Setup Lune
         run: lune setup
@@ -28,13 +28,13 @@ jobs:
         uses: actions/cache@v4.0.2
         with:
           path: |
-            ~/.aftman
+            ~/.rokit
             ~/.lune
             Packages
             DevPackages
-          key: tools-${{ hashFiles('aftman.toml') }}
+          key: tools-${{ hashFiles('rokit.toml') }}
 
-  # Kampfkarren/selene is assumed to be included in the repository's aftman.toml file
+  # Kampfkarren/selene is assumed to be included in the repository's rokit.toml file
   linting:
     name: Lint with Selene
     runs-on: ubuntu-latest
@@ -48,11 +48,11 @@ jobs:
         uses: actions/cache@v4.0.2
         with:
           path: |
-            ~/.aftman
+            ~/.rokit
             ~/.lune
             Packages
             DevPackages
-          key: tools-${{ hashFiles('aftman.toml') }}
+          key: tools-${{ hashFiles('rokit.toml') }}
 
       - name: Lint StateMachine
         run: ./scripts/lint.sh src/StateMachine
@@ -63,7 +63,7 @@ jobs:
       - name: Lint Lune
         run: ./scripts/lint.sh lune
 
-  # JohnnyMorganz/stylua is assumed to be included in the repository's aftman.toml file
+  # JohnnyMorganz/stylua is assumed to be included in the repository's rokit.toml file
   formatting:
     name: Check format with StyLua
     runs-on: ubuntu-latest
@@ -77,11 +77,11 @@ jobs:
         uses: actions/cache@v4.0.2
         with:
           path: |
-            ~/.aftman
+            ~/.rokit
             ~/.lune
             Packages
             DevPackages
-          key: tools-${{ hashFiles('aftman.toml') }}
+          key: tools-${{ hashFiles('rokit.toml') }}
 
       - name: Enforce StateMachine code style with StyLua
         run: ./scripts/formatCheck.sh src/StateMachine
@@ -92,7 +92,7 @@ jobs:
       - name: Enforce Lune scripts code style with StyLua
         run: ./scripts/formatCheck.sh lune
 
-  # JohnnyMorganz/luau-lsp is assumed to be included in the repository's aftman.toml file
+  # JohnnyMorganz/luau-lsp is assumed to be included in the repository's rokit.toml file
   analyzing:
     name: Analyze with luau-lsp
     runs-on: ubuntu-latest
@@ -106,11 +106,11 @@ jobs:
         uses: actions/cache@v4.0.2
         with:
           path: |
-            ~/.aftman
+            ~/.rokit
             ~/.lune
             Packages
             DevPackages
-          key: tools-${{ hashFiles('aftman.toml') }}
+          key: tools-${{ hashFiles('rokit.toml') }}
 
       - name: Analyze StateMachine with luau-lsp
         run: |
@@ -125,7 +125,7 @@ jobs:
       - name: Analyze Lune scripts with luau-lsp
         run: ./scripts/analyze.sh lune
 
-  # lune-org/lune is assumed to be included in the repository's aftman.toml file
+  # lune-org/lune is assumed to be included in the repository's rokit.toml file
   testing:
     name: Run jest tests with Lune
     runs-on: ubuntu-latest
@@ -139,11 +139,11 @@ jobs:
         uses: actions/cache@v4.0.2
         with:
           path: |
-            ~/.aftman
+            ~/.rokit
             ~/.lune
             Packages
             DevPackages
-          key: tools-${{ hashFiles('aftman.toml') }}
+          key: tools-${{ hashFiles('rokit.toml') }}
 
       - name: Test with Lune
         run: ./scripts/test.sh
