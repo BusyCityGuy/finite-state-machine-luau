@@ -13,7 +13,7 @@ fi
 
 if [ -n "$2" ]; then
     echo "Beginning analysis on $2 with sourcemap from $1, settings from $SETTINGS_FILE, and global types from $TYPES_FILE..."
-    $HOME/.aftman/bin/luau-lsp analyze \
+    $HOME/.rokit/bin/luau-lsp analyze \
         --settings=$SETTINGS_FILE \
         --definitions=$TYPES_FILE \
         --sourcemap "$1" \
@@ -22,7 +22,7 @@ if [ -n "$2" ]; then
     echo "Analysis of $2 complete!"
 else
     echo "Beginning analysis on $1 with settings from $SETTINGS_FILE and global types from $TYPES_FILE..."
-    $HOME/.aftman/bin/luau-lsp analyze \
+    $HOME/.rokit/bin/luau-lsp analyze \
         --settings=$SETTINGS_FILE \
         --definitions=$TYPES_FILE \
         --ignore "*Packages/**" \
