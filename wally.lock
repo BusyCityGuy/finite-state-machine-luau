@@ -5,7 +5,17 @@ registry = "test"
 [[package]]
 name = "busycityguy/finite-state-machine-luau"
 version = "0.1.0"
-dependencies = [["t", "osyrisrblx/t@3.0.0"], ["Freeze", "duckarmor/freeze@0.1.4"], ["Jest", "jsdotlua/jest@3.6.1-rc.2"], ["JestGlobals", "jsdotlua/jest-globals@3.6.1-rc.2"]]
+dependencies = [["t", "corecii/greentea-t-standalone@0.4.7"], ["Freeze", "duckarmor/freeze@0.1.4"], ["Jest", "jsdotlua/jest@3.6.1-rc.2"], ["JestGlobals", "jsdotlua/jest-globals@3.6.1-rc.2"]]
+
+[[package]]
+name = "corecii/greentea"
+version = "0.4.7"
+dependencies = []
+
+[[package]]
+name = "corecii/greentea-t-standalone"
+version = "0.4.7"
+dependencies = [["GreenTea", "corecii/greentea@0.4.7"]]
 
 [[package]]
 name = "duckarmor/freeze"
@@ -246,11 +256,6 @@ dependencies = [["luau-polyfill", "jsdotlua/luau-polyfill@1.2.6"], ["promise", "
 name = "jsdotlua/timers"
 version = "1.2.6"
 dependencies = [["collections", "jsdotlua/collections@1.2.6"]]
-
-[[package]]
-name = "osyrisrblx/t"
-version = "3.0.0"
-dependencies = []
 
 [[package]]
 name = "roblox/testez"

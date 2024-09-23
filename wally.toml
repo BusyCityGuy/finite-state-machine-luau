@@ -8,7 +8,7 @@ realm = "shared"
 registry = "https://github.com/UpliftGames/wally-index"
 
 [dependencies]
-t = "osyrisrblx/t@3.0.0"
+t = "corecii/greentea-t-standalone@0.4.7"
 
 [dev-dependencies]
 Freeze = "duckarmor/freeze@0.1.4"
