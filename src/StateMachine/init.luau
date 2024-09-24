@@ -25,6 +25,8 @@
 
 --]]
 
+-- Version: 0.0.0
+
 --[[
 	# What's a finite state machine?
 		A Finite State Machine (FSM) provides a way to enforce specific logical flow among a set of States. Given an Event, the FSM responds by looking up the corresponding Transition for that Event in its current State. A Transition is a callback function that is invoked when an Event is given to the FSM, and it returns the next State for the FSM to move to.

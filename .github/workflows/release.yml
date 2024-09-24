@@ -63,8 +63,8 @@ jobs:
             DevPackages
           key: tools-${{ hashFiles('rokit.toml') }}
 
-  sync-versions-in-codebase:
-    name: Update hardcoded versions in the codebase
+  preprocess-release:
+    name: Preprocess release (update versions, copyright years)
     runs-on: ubuntu-latest
     needs: [install-tools, get-version]
 
@@ -82,15 +82,15 @@ jobs:
             DevPackages
           key: tools-${{ hashFiles('rokit.toml') }}
 
-      - name: Locally update version in files
-        run: lune run setVersion ${{ steps.get-version.outputs.version-with-dots }}
+      - name: Locally update version & copyright year in files
+        run: lune run preprocessRelease ${{ steps.get-version.outputs.version-with-dots }}
 
-      # - name: Commit version updates
-      #   uses: stefanzweifel/git-auto-commit-action@v5.0.1
-      #   with:
-      #     commit_message: "Auto-update listed release version to ${{ steps.get-version.outputs.version-with-dots }}"
-      #     branch: main
-      #     file_pattern: 'README.md wally.toml'
+      - name: Commit version & copyright year updates
+        uses: stefanzweifel/git-auto-commit-action@v5.0.1
+        with:
+          commit_message: "Preprocess release for version ${{ steps.get-version.outputs.version-with-dots }}"
+          branch: release-action # TODO: Switch to main once this is tested
+          file_pattern: "README.md wally.toml src/StateMachine/init.luau LICENSE.md"
 
   create-release:
     name: Create release
