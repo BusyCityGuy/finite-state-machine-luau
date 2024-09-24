@@ -16,6 +16,8 @@ local fs = require("@lune/fs")
 local process = require("@lune/process")
 
 local version: string = process.args[1]
+assert(version, "No version specified")
+assert(version:match("^%d+%.%d+%.%d+$"), `Invalid version format. Expected "x.y.z", got "{version}"`)
 
 local function updateFile(description: string, filePath: string, pattern: string, replacement: string)
 	local fileContents = fs.readFile(filePath)
