@@ -95,7 +95,7 @@ jobs:
   create-release:
     name: Create release
     runs-on: ubuntu-latest
-    needs: [install-tools, get-version]
+    needs: [install-tools, get-version, preprocess-release]
 
     steps:
       - name: Checkout code
