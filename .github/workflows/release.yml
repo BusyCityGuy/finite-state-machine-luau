@@ -1,0 +1,166 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  get-version:
+    name: Get version from release tag
+    runs-on: ubuntu-latest
+
+    outputs:
+      tag-name: ${{ steps.output-version.outputs.tag_name }}
+      version-with-dots: ${{ steps.output-version.outputs.version_with_dots }}
+      version-with-dashes: ${{ steps.output-version.outputs.version_with_dashes }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.1.7
+
+      - name: Output version and tag name
+        id: output-version
+        run: |
+          # Get the tag name (e.g., v0.1.0)
+          tag_name="${{ github.event.release.tag_name }}"
+          echo "tag_name=$tag_name" >> $GITHUB_OUTPUT
+          echo "tag_name=$tag_name"
+
+          # Strip the leading 'v' to get the version (e.g., 0.1.0)
+          version_with_dots="${tag_name#v}"
+          echo "version_with_dots=$version_with_dots" >> $GITHUB_OUTPUT
+          echo "version_with_dots=$version_with_dots"
+
+          # Replaces . with - for use in filenames (e.g., 0-1-0)
+          version_with_dashes="${version//./-}"
+          echo "version_with_dashes=$version_with_dashes" >> $GITHUB_OUTPUT
+          echo "version_with_dashes=$version_with_dashes"
+
+  install-tools:
+    name: Install tools and dependencies
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.1.7
+
+      - name: Install Rokit
+        uses: CompeyDev/setup-rokit@v0.1.2
+
+      - name: Setup Lune
+        run: lune setup
+
+      - name: Install dependencies with Wally
+        run: wally install
+
+      - name: Cache installed items
+        uses: actions/cache@v4.0.2
+        with:
+          path: |
+            ~/.rokit
+            ~/.lune
+            Packages
+            DevPackages
+          key: tools-${{ hashFiles('rokit.toml') }}
+
+  sync-versions-in-codebase:
+    name: Update hardcoded versions in the codebase
+    runs-on: ubuntu-latest
+    needs: [install-tools, get-version]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.1.7
+
+      - name: Restore installed items
+        uses: actions/cache@v4.0.2
+        with:
+          path: |
+            ~/.rokit
+            ~/.lune
+            Packages
+            DevPackages
+          key: tools-${{ hashFiles('rokit.toml') }}
+
+      - name: Locally update version in files
+        run: lune run setVersion ${{ steps.get-version.outputs.version-with-dots }}
+
+      # - name: Commit version updates
+      #   uses: stefanzweifel/git-auto-commit-action@v5.0.1
+      #   with:
+      #     commit_message: "Auto-update listed release version to ${{ steps.get-version.outputs.version-with-dots }}"
+      #     branch: main
+      #     file_pattern: 'README.md wally.toml'
+
+  create-release:
+    name: Create release
+    runs-on: ubuntu-latest
+    needs: [install-tools, get-version]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.1.7
+
+      - name: Restore installed items
+        uses: actions/cache@v4.0.2
+        with:
+          path: |
+            ~/.rokit
+            ~/.lune
+            Packages
+            DevPackages
+          key: tools-${{ hashFiles('rokit.toml') }}
+
+      - name: Build with Rojo
+        run: lune run build ${{ steps.get-version.outputs.version-with-dashes }}
+
+  #   name: Release to Wally
+  #   runs-on: ubuntu-latest
+  #   needs: [install-tools]
+
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4.1.7
+
+  #     - name: Build with Rojo
+  #       run: rojo build default.project.json -o StateMachine ${{steps.package-version.outputs.current-version}}.rbxm
+
+  #     - name: create-release
+  #       uses: actions/create-release@latest
+  #       id: create_release
+  #       with:
+  #         draft: false
+  #         prerelease: false
+  #         release_name: ${{ steps.package-version.outputs.current-version }}
+  #         tag_name: ${{ steps.package-version.outputs.current-version }}
+  #         body_path: CHANGELOG.md
+  #       env:
+  #         GITHUB_TOKEN: ${{ github.token }}
+  #     - name: upload rbxmx file to release
+  #       uses: actions/upload-release-asset@v1
+  #       env:
+  #         GITHUB_TOKEN: ${{ github.token }}
+  #       with:
+  #         upload_url: ${{ steps.create_release.outputs.upload_url }}
+  #         asset_path: ./finite-state-machine-${{ steps.package-version.outputs.current-version }}.rbxmx
+  #         asset_name: finite-state-machine-${{ steps.package-version.outputs.current-version }}.rbxmx
+  #         asset_content_type: form
+  #     - name: upload rbxmx file to Roblox
+  #       run: |
+  #         cd ./scripts
+  #         python upload_model.py -a ${{ secrets.ASSET_ID }} -f ../finite-state-machine-${{ steps.package-version.outputs.current-version }}.rbxmx -r "${{ secrets.UPLOADER_BOT_ROBLOSECURITY }}"
+  #         cd ..
+  #     - name: prepare wally package contents
+  #       run: |
+  #         mkdir -p ~/temp/finite-state-machine
+  #         cp -r ./{include,out} ~/temp/finite-state-machine/
+  #         cp ./{CHANGELOG.md,LICENSE,README.md,wally.lock,wally.toml} ~/temp/finite-state-machine/
+  #         cp ./standalone-model.project.json ~/temp/finite-state-machine/default.project.json
+  #         mkdir ~/temp/finite-state-machine/node_modules
+  #         cp -r ./node_modules/@rbxts ~/temp/finite-state-machine/node_modules/
+  #     - name: prepare wally auth
+  #       run: |
+  #         mkdir ~/.wally
+  #         echo -e '${{ secrets.WALLY_AUTH }}' > ~/.wally/auth.toml
+  #     - name: publish wally package
+  #       run: wally publish --project-path ~/temp/finite-state-machine/
