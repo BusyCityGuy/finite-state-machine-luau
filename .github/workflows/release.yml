@@ -83,7 +83,7 @@ jobs:
           key: tools-${{ hashFiles('rokit.toml') }}
 
       - name: Locally update version & copyright year in files
-        run: lune run preprocessRelease ${{ steps.get-version.outputs.version-with-dots }}
+        run: ~/.rokit/bin/lune run preprocessRelease ${{ steps.get-version.outputs.version-with-dots }}
 
       - name: Commit version & copyright year updates
         uses: stefanzweifel/git-auto-commit-action@v5.0.1
@@ -112,7 +112,7 @@ jobs:
           key: tools-${{ hashFiles('rokit.toml') }}
 
       - name: Build with Rojo
-        run: lune run build ${{ steps.get-version.outputs.version-with-dashes }}
+        run: ~/.rokit/bin/lune run build ${{ steps.get-version.outputs.version-with-dashes }}
 
   #   name: Release to Wally
   #   runs-on: ubuntu-latest
