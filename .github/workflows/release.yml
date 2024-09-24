@@ -32,7 +32,7 @@ jobs:
           echo "version_with_dots=$version_with_dots"
 
           # Replaces . with - for use in filenames (e.g., 0-1-0)
-          version_with_dashes="${version//./-}"
+          version_with_dashes="${version_with_dots//./-}"
           echo "version_with_dashes=$version_with_dashes" >> $GITHUB_OUTPUT
           echo "version_with_dashes=$version_with_dashes"
 
