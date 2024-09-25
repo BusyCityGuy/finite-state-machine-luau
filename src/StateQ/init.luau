@@ -3,7 +3,7 @@
 --[[
 	MIT License
 
-	Copyright (c) 2023 BusyCityGuy
+	Copyright (c) 2024 BusyCityGuy
 
 	Permission is hereby granted, free of charge, to any person obtaining a copy
 	of this software and associated documentation files (the "Software"), to deal
@@ -24,6 +24,8 @@
 	SOFTWARE.
 
 --]]
+
+-- Version: 0.0.0
 
 --[[
 	# What's a finite state machine?
@@ -71,7 +73,7 @@
 				SwitchOff = "SwitchOff",
 			}
 
-			local light = StateMachine.new(LightState.On, {
+			local light = StateQ.new(LightState.On, {
 				[Event.SwitchOn] = {
 					canBeFinal = true,
 					from = {
@@ -162,11 +164,11 @@ local checkAfterState = t.strict(t.optional(State))
 local queueEventAsyncCheck = t.strict(t.tuple(EventName, Event))
 local handleCheck = t.strict(EventName)
 
-local StateMachine = {}
-StateMachine.Logger = Logger
-StateMachine.__index = StateMachine
-StateMachine.__tostring = function(_self)
-	return "StateMachine"
+local StateQ = {}
+StateQ.Logger = Logger
+StateQ.__index = StateQ
+StateQ.__tostring = function(_self)
+	return "StateQ"
 end
 
 export type ClassType = typeof(setmetatable(
@@ -186,12 +188,12 @@ export type ClassType = typeof(setmetatable(
 		_logger: Logger.ClassType,
 		_isDestroyed: boolean,
 	},
-	StateMachine
+	StateQ
 ))
 
 local machineNumber = 0
 
-function StateMachine.new(
+function StateQ.new(
 	initialState: State,
 	eventsByName: { [EventName]: Event },
 	name: string?,
@@ -223,14 +225,14 @@ function StateMachine.new(
 		_isDestroyed = false,
 	}
 
-	setmetatable(self, StateMachine)
+	setmetatable(self, StateQ)
 
 	self:_createEventHandlers(eventsByName)
 
 	return self
 end
 
-function StateMachine._createEventHandlers(self: ClassType, eventsByName: { [EventName]: Event })
+function StateQ._createEventHandlers(self: ClassType, eventsByName: { [EventName]: Event })
 	self:getLogger():wrap(createEventHandlersCheck, eventsByName)
 
 	for eventName, event in pairs(eventsByName) do
@@ -246,7 +248,7 @@ function StateMachine._createEventHandlers(self: ClassType, eventsByName: { [Eve
 	end
 end
 
-function StateMachine._queueEventAsync(self: ClassType, eventName: EventName, event: Event, ...: any?)
+function StateQ._queueEventAsync(self: ClassType, eventName: EventName, event: Event, ...: any?)
 	self:getLogger():wrap(queueEventAsyncCheck, eventName, event)
 
 	local args = { ... }
@@ -305,7 +307,7 @@ function StateMachine._queueEventAsync(self: ClassType, eventName: EventName, ev
 end
 
 -- VarArgs get passed to the transition callbacks
-function StateMachine.handle(self: ClassType, eventName: EventName, ...: any?)
+function StateQ.handle(self: ClassType, eventName: EventName, ...: any?)
 	self:getLogger():wrap(handleCheck, eventName)
 	self:getLogger()
 		:assert(not self._isDestroyed, `Attempt to handle event {eventName} after the state machine was destroyed`)
@@ -317,19 +319,19 @@ function StateMachine.handle(self: ClassType, eventName: EventName, ...: any?)
 	coroutine.wrap(handleEvent :: EventHandler)(...)
 end
 
-function StateMachine.getLogger(self: ClassType): Logger.ClassType
+function StateQ.getLogger(self: ClassType): Logger.ClassType
 	return self._logger
 end
 
-function StateMachine.getState(self: ClassType)
+function StateQ.getState(self: ClassType)
 	return self._currentState
 end
 
-function StateMachine.getValidEvents(self: ClassType)
+function StateQ.getValidEvents(self: ClassType)
 	return self._currentState and self._validEventNamesByState[self._currentState] or {}
 end
 
-function StateMachine.destroy(self: ClassType)
+function StateQ.destroy(self: ClassType)
 	self._isDestroyed = true
 	self.beforeEvent:DisconnectAll()
 	self.leavingState:DisconnectAll()
@@ -338,4 +340,4 @@ function StateMachine.destroy(self: ClassType)
 	self.finished:DisconnectAll()
 end
 
-return StateMachine
+return StateQ
