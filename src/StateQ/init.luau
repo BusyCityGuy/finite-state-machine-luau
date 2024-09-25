@@ -3,7 +3,7 @@
 --[[
 	MIT License
 
-	Copyright (c) 2023 BusyCityGuy
+	Copyright (c) 2024 BusyCityGuy
 
 	Permission is hereby granted, free of charge, to any person obtaining a copy
 	of this software and associated documentation files (the "Software"), to deal
@@ -25,7 +25,7 @@
 
 --]]
 
--- Version: 0.0.0
+-- Version: 00.00.00
 
 --[[
 	# What's a finite state machine?

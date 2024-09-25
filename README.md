@@ -118,7 +118,7 @@ In the future, an alternative installation method will be to download your desir
 
 Provided in the release will be a `.zip` file that can be extracted into your Rojo project, or you can download the `.rbxm` and drag it into Roblox Studio if you're not using Rojo.
 
-Also in the future, this project will be published on [Wally](https://wally.run/), and could be installed into your project by adding `StateQ = "busycityguy/stateq@0.0.0"` to your `wally.toml` file.
+Also in the future, this project will be published on [Wally](https://wally.run/), and could be installed into your project by adding `StateQ = "busycityguy/stateq@00.00.00"` to your `wally.toml` file.
 
 </details>
 
