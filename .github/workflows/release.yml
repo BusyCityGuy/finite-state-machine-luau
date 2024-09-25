@@ -114,6 +114,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4.1.7
+        with:
+          ref: ${{ github.ref }}
 
       - name: Restore installed items
         uses: actions/cache@v4.0.2
@@ -148,6 +150,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4.1.7
+        with:
+          ref: ${{ github.ref }}
 
       - name: Restore installed items
         uses: actions/cache@v4.0.2
