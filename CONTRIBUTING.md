@@ -116,7 +116,7 @@ If you're running tests in studio yourself (not recommended) instead of using th
 
 | Method        | Instructions                                                                                                                                           |
 | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| CLI           | `rojo build test.project.json -o StateMachine-Test.rbxl`                                                                                               |
+| CLI           | `rojo build test.project.json -o StateQ-Test.rbxl`                                                                                                     |
 | VSC Extension | Click Rojo on the status bar at the bottom, mouse over `test.project.json` in the pop-up menu, and click the Build icon on the right of the list item. |
 </details>
 
@@ -174,10 +174,10 @@ You need to set the `FFlagEnableLoadModule` value to `true`. Be sure to restart 
 
 ### Run tests
 
-| Method            | Instructions                                                                                                                                                                                   |
-| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| CLI (recommended) | `lune run test`                                                                                                                                                                                |
-| Roblox Studio     | Open the test place file `StateMachine-Test.rbxl` [built in the above step](#build-the-project) in Roblox Studio and run the place (server only). The output widget will show the test results. |
+| Method            | Instructions                                                                                                                                                                             |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| CLI (recommended) | `lune run test`                                                                                                                                                                          |
+| Roblox Studio     | Open the test place file `StateQ-Test.rbxl` [built in the above step](#build-the-project) in Roblox Studio and run the place (server only). The output widget will show the test results. |
 
 ### Continuous Integration (CI)
 
@@ -211,3 +211,12 @@ Alternatively, you can run individual steps yourself:
 There is an additional script available to fix formatting with StyLua, that does not run on GitHub:
 
 > lune run formatFix
+
+## Releasing
+
+1. To make a release, use the GitHub web interface to [create a new release](https://github.com/BusyCityGuy/finite-state-machine-luau/releases/new).
+1. Choose a tag with a version number like `v0.0.0`, beginning with `v` and using semantic versioning. No suffix like `-pre` is supported, only numbers as shown.
+1. Create a release title, preferably something like "Version 0.0.0" to be consistent with the tag.
+1. Describe the changes in the release
+1. Publish release
+1. A GitHub Actions workflow will automatically run and upload .zip and .rbxm artifacts to the release. It will also automatically publish the release to Wally, and update hardcoded numbers throughout the codebase like versions and copyright years.

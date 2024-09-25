@@ -1,7 +1,7 @@
 --!strict
 
 --[[
-	A lightweight, strictly-typed logger class designed with a minimal set of requirements for the StateMachine project, so it is not feature rich.
+	A lightweight, strictly typed logger class designed with a minimal set of requirements for the StateQ project, so it is not feature rich.
 	This logger class includes a few features such:
 	- A concept of log levels (Debug, Info, Warning, Error): These levels allow for categorizing the importance of the logs.
 	- Methods for logging at these levels: Convenient methods for logging at each level.
@@ -34,7 +34,7 @@
 			error("This is an error thrown from a wrapped function")
 		end)
 
-	A primary purpose of this class existing is to be able to check for errors from within tests. The StateMachine queues events,
+	A primary purpose of this class existing is to be able to check for errors from within tests. The StateQ queues events,
 	starting a new thread to process them, which means errors that occur are not propagated to the main thread and can't be tested for.
 	This logger class allows for the testing of errors by adding a handler for errors, and then checking for those errors in tests.
 --]]

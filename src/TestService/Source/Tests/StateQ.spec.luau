@@ -6,9 +6,8 @@ local TestService = game:GetService("TestService")
 
 local Freeze = require(TestService.Dependencies.Freeze)
 local JestGlobals = require(TestService.Dependencies.JestGlobals)
-local Logger = require(ReplicatedStorage.Source.StateMachine.Modules.Logger)
-local Signal = require(ReplicatedStorage.Source.StateMachine.Modules.Signal)
-local StateMachine = require(ReplicatedStorage.Source.StateMachine)
+local Logger = require(ReplicatedStorage.Source.StateQ.Modules.Logger)
+local StateQ = require(ReplicatedStorage.Source.StateQ)
 
 -- Shortening things is generally bad practice, but this greatly improves readability of tests
 local Dict = Freeze.Dictionary
@@ -84,14 +83,14 @@ describe("new", function()
 				local badType = badTypes[i]
 				it(`{i} bad: {typeof(badType)}`, function()
 					expect(function()
-						StateMachine.new(badType, eventsByName)
+						StateQ.new(badType, eventsByName)
 					end).toThrow("Bad tuple index #1")
 				end)
 			end
 
 			it(`good: {typeof(goodType)}`, function()
 				expect(function()
-					StateMachine.new(goodType, eventsByName)
+					StateQ.new(goodType, eventsByName)
 				end).never.toThrow()
 			end)
 		end)
@@ -122,14 +121,14 @@ describe("new", function()
 				local badType = badTypes[i]
 				it(`{i} bad: {typeof(badType)}`, function()
 					expect(function()
-						StateMachine.new(X_STATE, badType)
+						StateQ.new(X_STATE, badType)
 					end).toThrow("Bad tuple index #2")
 				end)
 			end
 
 			it(`good: {typeof(goodEventsByName)}`, function()
 				expect(function()
-					StateMachine.new(X_STATE, goodEventsByName)
+					StateQ.new(X_STATE, goodEventsByName)
 				end).never.toThrow()
 			end)
 		end)
@@ -162,7 +161,7 @@ describe("new", function()
 				local badType = badTypes[i]
 				it(`{i} bad: {typeof(badType)}`, function()
 					expect(function()
-						StateMachine.new(X_STATE, eventsByName, badType)
+						StateQ.new(X_STATE, eventsByName, badType)
 					end).toThrow("Bad tuple index #3")
 				end)
 			end
@@ -171,7 +170,7 @@ describe("new", function()
 				local goodType = goodTypes[i]
 				it(`{i} good: {typeof(goodType)}`, function()
 					expect(function()
-						StateMachine.new(X_STATE, eventsByName, goodType)
+						StateQ.new(X_STATE, eventsByName, goodType)
 					end).never.toThrow()
 				end)
 			end
@@ -198,17 +197,17 @@ describe("new", function()
 
 			local goodTypes: { nil | Logger.LogLevel } = {
 				nil,
-				StateMachine.Logger.LogLevel.Error,
-				StateMachine.Logger.LogLevel.Warn,
-				StateMachine.Logger.LogLevel.Info,
-				StateMachine.Logger.LogLevel.Debug,
+				StateQ.Logger.LogLevel.Error,
+				StateQ.Logger.LogLevel.Warn,
+				StateQ.Logger.LogLevel.Info,
+				StateQ.Logger.LogLevel.Debug,
 			}
 
 			for i = 1, #badTypes do
 				local badType = badTypes[i]
 				it(`{i} bad: {typeof(badType)}`, function()
 					expect(function()
-						StateMachine.new(X_STATE, eventsByName, nil, badType)
+						StateQ.new(X_STATE, eventsByName, nil, badType)
 					end).toThrow("Bad tuple index #4")
 				end)
 			end
@@ -217,7 +216,7 @@ describe("new", function()
 				local goodType: nil | Logger.LogLevel = goodTypes[i]
 				it(`{i} good: {typeof(goodType)}`, function()
 					expect(function()
-						StateMachine.new(X_STATE, eventsByName, nil, goodType)
+						StateQ.new(X_STATE, eventsByName, nil, goodType)
 					end).never.toThrow()
 				end)
 			end
@@ -237,12 +236,12 @@ describe("new", function()
 			},
 		}
 
-		local stateMachine1 = StateMachine.new(initialState, eventsByName)
-		local stateMachine2 = StateMachine.new(initialState, eventsByName)
+		local stateQ1 = StateQ.new(initialState, eventsByName)
+		local stateQ2 = StateQ.new(initialState, eventsByName)
 
-		expect(stateMachine1).toBeInstanceOf(StateMachine)
-		expect(stateMachine2).toBeInstanceOf(StateMachine)
-		expect(stateMachine1 == stateMachine2).toBe(false)
+		expect(stateQ1).toBeInstanceOf(StateQ)
+		expect(stateQ2).toBeInstanceOf(StateQ)
+		expect(stateQ1 == stateQ2).toBe(false)
 	end)
 
 	describe("should initialize", function()
@@ -259,8 +258,8 @@ describe("new", function()
 				},
 			}
 
-			local stateMachine = StateMachine.new(initialState, eventsByName)
-			expect(stateMachine._currentState).toBe(initialState)
+			local stateQ = StateQ.new(initialState, eventsByName)
+			expect(stateQ._currentState).toBe(initialState)
 		end)
 
 		it("valid event names by state", function()
@@ -286,9 +285,9 @@ describe("new", function()
 				},
 			}
 
-			local stateMachine = StateMachine.new(X_STATE, eventsByName)
-			local validEventNamesFromX = stateMachine._validEventNamesByState[X_STATE]
-			local validEventNamesFromY = stateMachine._validEventNamesByState[Y_STATE]
+			local stateQ = StateQ.new(X_STATE, eventsByName)
+			local validEventNamesFromX = stateQ._validEventNamesByState[X_STATE]
+			local validEventNamesFromY = stateQ._validEventNamesByState[Y_STATE]
 
 			expect(validEventNamesFromX).toEqual(expect.any("table"))
 			expect(validEventNamesFromY).toEqual(expect.any("table"))
@@ -324,8 +323,8 @@ describe("new", function()
 				},
 			}
 
-			local stateMachine = StateMachine.new(X_STATE, eventsByName)
-			local handlers = stateMachine._handlersByEventName
+			local stateQ = StateQ.new(X_STATE, eventsByName)
+			local handlers = stateQ._handlersByEventName
 
 			expect(Dict.count(handlers)).toBe(2)
 			expect(handlers[TO_X_EVENT]).toEqual(expect.any("function"))
@@ -344,14 +343,14 @@ describe("new", function()
 				},
 			}
 
-			local stateMachine = StateMachine.new(X_STATE, eventsByName)
+			local stateQ = StateQ.new(X_STATE, eventsByName)
 
 			-- FIXME: Can't use toBeInstanceOf because of some weird behavior with ReducedInstance for running tests in lune
-			expect(stateMachine[BEFORE_EVENT_SIGNAL]).never.toBeNil()
-			expect(stateMachine[LEAVING_STATE_SIGNAL]).never.toBeNil()
-			expect(stateMachine[STATE_ENTERED_SIGNAL]).never.toBeNil()
-			expect(stateMachine[AFTER_EVENT_SIGNAL]).never.toBeNil()
-			expect(stateMachine[FINISHED_SIGNAL]).never.toBeNil()
+			expect(stateQ[BEFORE_EVENT_SIGNAL]).never.toBeNil()
+			expect(stateQ[LEAVING_STATE_SIGNAL]).never.toBeNil()
+			expect(stateQ[STATE_ENTERED_SIGNAL]).never.toBeNil()
+			expect(stateQ[AFTER_EVENT_SIGNAL]).never.toBeNil()
+			expect(stateQ[FINISHED_SIGNAL]).never.toBeNil()
 		end)
 	end)
 end)
@@ -371,7 +370,7 @@ describe("handle", function()
 			},
 		}
 
-		local stateMachine = StateMachine.new(X_STATE, eventsByName)
+		local stateQ = StateQ.new(X_STATE, eventsByName)
 
 		local badTypes: { any } = {
 			1,
@@ -384,16 +383,16 @@ describe("handle", function()
 
 		for _, badType in badTypes do
 			expect(function()
-				stateMachine:handle(badType)
+				stateQ:handle(badType)
 			end).toThrow(`string expected, got {typeof(badType)}`)
 		end
 
 		expect(function()
-			stateMachine:handle(nonexistentEventName)
+			stateQ:handle(nonexistentEventName)
 		end).toThrow(`Invalid event name passed to handle: {nonexistentEventName}`)
 
 		expect(function()
-			StateMachine.new(goodType, eventsByName)
+			StateQ.new(goodType, eventsByName)
 		end).never.toThrow()
 	end)
 
@@ -411,13 +410,13 @@ describe("handle", function()
 				},
 			}
 
-			local stateMachine = StateMachine.new(initialState, eventsByName)
+			local stateQ = StateQ.new(initialState, eventsByName)
 			local resultSignalOrder: { string } = {}
 			local signalConnections: { Signal.SignalConnection } = {}
 
 			-- Set up event connections
 			for _, signalName in ORDERED_SIGNALS do
-				local newSignalConnection = (stateMachine[signalName] :: Signal.ClassType):Connect(function(_, _)
+				local newSignalConnection = (stateQ[signalName] :: Signal.ClassType):Connect(function(_, _)
 					table.insert(resultSignalOrder, signalName)
 
 					if #resultSignalOrder == #ORDERED_SIGNALS then
@@ -436,7 +435,7 @@ describe("handle", function()
 				table.insert(signalConnections, newSignalConnection)
 			end
 
-			stateMachine:handle(FINISH_EVENT)
+			stateQ:handle(FINISH_EVENT)
 		end, 50)
 
 		describe(`with the correct parameters and state`, function()
@@ -472,79 +471,79 @@ describe("handle", function()
 				},
 			}
 
-			local stateMachine
+			local stateQ
 
 			beforeEach(function()
 				receivedParameters = nil
-				stateMachine = StateMachine.new(initialState, eventsByName)
+				stateQ = StateQ.new(initialState, eventsByName)
 			end)
 
 			it(BEFORE_EVENT_SIGNAL, function(_, done)
 				local signalConnection
-				signalConnection = stateMachine[BEFORE_EVENT_SIGNAL]:Connect(function(...)
+				signalConnection = stateQ[BEFORE_EVENT_SIGNAL]:Connect(function(...)
 					signalConnection:Disconnect()
 					receivedParameters = { ... }
 					xpcall(function()
 						expect(#receivedParameters).toBe(2)
 						expect(receivedParameters[1]).toBe(handledEventName)
 						expect(receivedParameters[2]).toBe(initialState)
-						expect(stateMachine._currentState).toBe(initialState)
+						expect(stateQ._currentState).toBe(initialState)
 						done()
 					end, function(err)
 						done(err)
 					end)
 				end)
 
-				stateMachine:handle(handledEventName, table.unpack(variadicArgs))
+				stateQ:handle(handledEventName, table.unpack(variadicArgs))
 			end, timeout)
 
 			it(LEAVING_STATE_SIGNAL, function(_, done)
 				local expectedAfterState = Y_STATE
 
 				local signalConnection
-				signalConnection = stateMachine[LEAVING_STATE_SIGNAL]:Connect(function(...)
+				signalConnection = stateQ[LEAVING_STATE_SIGNAL]:Connect(function(...)
 					signalConnection:Disconnect()
 					receivedParameters = { ... }
 					xpcall(function()
 						expect(#receivedParameters).toBe(2)
 						expect(receivedParameters[1]).toBe(initialState)
 						expect(receivedParameters[2]).toBe(expectedAfterState)
-						expect(stateMachine._currentState).toBe(initialState)
+						expect(stateQ._currentState).toBe(initialState)
 						done()
 					end, function(err)
 						done(err)
 					end)
 				end)
 
-				stateMachine:handle(handledEventName, table.unpack(variadicArgs))
+				stateQ:handle(handledEventName, table.unpack(variadicArgs))
 			end, timeout)
 
 			it(STATE_ENTERED_SIGNAL, function(_, done)
 				local expectedAfterState = Y_STATE
 
 				local signalConnection
-				signalConnection = stateMachine[STATE_ENTERED_SIGNAL]:Connect(function(...)
+				signalConnection = stateQ[STATE_ENTERED_SIGNAL]:Connect(function(...)
 					signalConnection:Disconnect()
 					receivedParameters = { ... }
 					xpcall(function()
 						expect(#receivedParameters).toBe(2)
 						expect(receivedParameters[1]).toBe(expectedAfterState)
 						expect(receivedParameters[2]).toBe(initialState)
-						expect(stateMachine._currentState).toBe(expectedAfterState)
+						expect(stateQ._currentState).toBe(expectedAfterState)
 						done()
 					end, function(err)
 						done(err)
 					end)
 				end)
 
-				stateMachine:handle(handledEventName, table.unpack(variadicArgs))
+				stateQ:handle(handledEventName, table.unpack(variadicArgs))
 			end, timeout)
 
 			it(AFTER_EVENT_SIGNAL, function(_, done)
 				local expectedAfterState = Y_STATE
 
 				local signalConnection
-				signalConnection = stateMachine[AFTER_EVENT_SIGNAL]:Connect(function(...)
+				signalConnection = stateQ[AFTER_EVENT_SIGNAL]:Connect(function(...)
 					signalConnection:Disconnect()
 					receivedParameters = { ... }
 					xpcall(function()
@@ -552,32 +551,32 @@ describe("handle", function()
 						expect(receivedParameters[1]).toBe(handledEventName)
 						expect(receivedParameters[2]).toBe(expectedAfterState)
 						expect(receivedParameters[3]).toBe(initialState)
-						expect(stateMachine._currentState).toBe(expectedAfterState)
+						expect(stateQ._currentState).toBe(expectedAfterState)
 						done()
 					end, function(err)
 						done(err)
 					end)
 				end)
 
-				stateMachine:handle(handledEventName, table.unpack(variadicArgs))
+				stateQ:handle(handledEventName, table.unpack(variadicArgs))
 			end, timeout)
 
 			it(FINISHED_SIGNAL, function(_, done)
 				local signalConnection
-				signalConnection = stateMachine[FINISHED_SIGNAL]:Connect(function(...)
+				signalConnection = stateQ[FINISHED_SIGNAL]:Connect(function(...)
 					signalConnection:Disconnect()
 					receivedParameters = { ... }
 					xpcall(function()
 						expect(#receivedParameters).toBe(1)
 						expect(receivedParameters[1]).toBe(initialState)
-						expect(stateMachine._currentState).toBe(FINISH_STATE)
+						expect(stateQ._currentState).toBe(FINISH_STATE)
 						done()
 					end, function(err)
 						done(err)
 					end)
 				end)
 
-				stateMachine:handle(FINISH_EVENT, table.unpack(variadicArgs))
+				stateQ:handle(FINISH_EVENT, table.unpack(variadicArgs))
 			end, timeout)
 		end)
 	end)
@@ -607,42 +606,42 @@ describe("handle", function()
 				},
 			}
 
-			local stateMachine = StateMachine.new(initialState, eventsByName)
+			local stateQ = StateQ.new(initialState, eventsByName)
 			local signalConnections = {}
 
-			stateMachine:handle(FINISH_EVENT)
+			stateQ:handle(FINISH_EVENT)
 
 			table.insert(
 				signalConnections,
-				stateMachine[BEFORE_EVENT_SIGNAL]:Connect(function()
+				stateQ[BEFORE_EVENT_SIGNAL]:Connect(function()
 					table.insert(firedSignals, BEFORE_EVENT_SIGNAL)
 				end)
 			)
 
 			table.insert(
 				signalConnections,
-				stateMachine[LEAVING_STATE_SIGNAL]:Connect(function()
+				stateQ[LEAVING_STATE_SIGNAL]:Connect(function()
 					table.insert(firedSignals, LEAVING_STATE_SIGNAL)
 				end)
 			)
 
 			table.insert(
 				signalConnections,
-				stateMachine[STATE_ENTERED_SIGNAL]:Connect(function()
+				stateQ[STATE_ENTERED_SIGNAL]:Connect(function()
 					table.insert(firedSignals, STATE_ENTERED_SIGNAL)
 				end)
 			)
 
 			table.insert(
 				signalConnections,
-				stateMachine[AFTER_EVENT_SIGNAL]:Connect(function()
+				stateQ[AFTER_EVENT_SIGNAL]:Connect(function()
 					table.insert(firedSignals, AFTER_EVENT_SIGNAL)
 				end)
 			)
 
 			table.insert(
 				signalConnections,
-				stateMachine[FINISHED_SIGNAL]:Connect(function()
+				stateQ[FINISHED_SIGNAL]:Connect(function()
 					table.insert(firedSignals, FINISHED_SIGNAL)
 				end)
 			)
@@ -688,7 +687,7 @@ describe("handle", function()
 			local handledEventName = FINISH_EVENT
 			-- local expectedAfterState = FINISH_STATE
 			local receivedParameters
-			local stateMachine
+			local stateQ
 			local eventsByName = {
 				[FINISH_EVENT] = {
 					canBeFinal = true,
@@ -710,14 +709,14 @@ describe("handle", function()
 				},
 			}
 
-			stateMachine = StateMachine.new(initialState, eventsByName)
+			stateQ = StateQ.new(initialState, eventsByName)
 
 			-- Test beforeAsync
 			timeoutThread = task.delay(timeout, function()
 				coroutine.resume(mainThread, `timeout waiting {timeout} seconds for beforeAsync invocation`)
 			end)
 
-			stateMachine:handle(handledEventName, table.unpack(variadicArgs))
+			stateQ:handle(handledEventName, table.unpack(variadicArgs))
 
 			local invokedCallback = coroutine.yield(mainThread)
 			expect(invokedCallback).toBe("beforeAsync")
@@ -725,7 +724,7 @@ describe("handle", function()
 				expect(receivedParameters[index]).toBe(variadicArg)
 			end
 			expect(#receivedParameters).toBe(#variadicArgs)
-			expect(stateMachine._currentState).toBe(initialState)
+			expect(stateQ._currentState).toBe(initialState)
 
 			-- Test afterAsync
 			timeoutThread = task.delay(timeout, function()
@@ -738,7 +737,7 @@ describe("handle", function()
 			-- 	expect(receivedParameters[index]).toBe(variadicArg)
 			-- end
 			-- expect(#receivedParameters).toBe(#variadicArgs)
-			-- expect(stateMachine._currentState).toBe(expectedAfterState)
+			-- expect(stateQ._currentState).toBe(expectedAfterState)
 		end)
 	end)
 
@@ -791,18 +790,18 @@ describe("handle", function()
 			},
 		}
 
-		local stateMachine = StateMachine.new(initialState, eventsByName)
+		local stateQ = StateQ.new(initialState, eventsByName)
 
 		-- Queue events
 		for _, handledEventName in ipairs(orderedHandledEvents) do
-			stateMachine:handle(handledEventName)
+			stateQ:handle(handledEventName)
 		end
 
 		local timeoutThread = task.delay(timeout, function()
 			coroutine.resume(mainThread, `timeout waiting {timeout} seconds for finished signal`)
 		end)
 
-		local signalConnection = stateMachine[FINISHED_SIGNAL]:Connect(function()
+		local signalConnection = stateQ[FINISHED_SIGNAL]:Connect(function()
 			task.cancel(timeoutThread)
 			coroutine.resume(mainThread, FINISHED_SIGNAL)
 		end)
@@ -828,9 +827,9 @@ describe("handle", function()
 			},
 		}
 
-		local stateMachine = StateMachine.new(X_STATE, eventsByName)
+		local stateQ = StateQ.new(X_STATE, eventsByName)
 		local mainThread = coroutine.running()
-		local logger = stateMachine:getLogger()
+		local logger = stateQ:getLogger()
 
 		local timeout = 0.5
 		local timeoutMessage = `timeout waiting {timeout} seconds for finished or error message`
@@ -838,9 +837,9 @@ describe("handle", function()
 			coroutine.resume(mainThread, timeoutMessage)
 		end)
 
-		stateMachine:handle(FINISH_EVENT)
-		stateMachine.finished:Wait()
-		expect(stateMachine._currentState).toBe(FINISH_STATE)
+		stateQ:handle(FINISH_EVENT)
+		stateQ.finished:Wait()
+		expect(stateQ._currentState).toBe(FINISH_STATE)
 
 		logger:addHandler(logger.LogLevel.Error, function(level: Logger.LogLevel, _name: string, message: string)
 			if level ~= logger.LogLevel.Error then
@@ -856,7 +855,7 @@ describe("handle", function()
 			return logger.HandlerResult.Sink
 		end)
 
-		stateMachine:handle(FINISH_EVENT)
+		stateQ:handle(FINISH_EVENT)
 		local errorMessage = coroutine.yield()
 		expect(errorMessage == timeoutMessage).never.toBe(true)
 		expect(errorMessage).toEqual(
@@ -880,15 +879,15 @@ end)
 -- 			},
 -- 		}
 
--- 		local stateMachine = StateMachine.new(initialState, eventsByName)
+-- 		local stateQ = StateQ.new(initialState, eventsByName)
 
 -- 		-- Test getting the current state
--- 		local state = stateMachine:getState()
+-- 		local state = stateQ:getState()
 -- 		expect(state).toBe(initialState)
 
 -- 		-- Test getting the state after a transition
--- 		stateMachine:handle("toB")
--- 		state = stateMachine:getState()
+-- 		stateQ:handle("toB")
+-- 		state = stateQ:getState()
 -- 		expect(state).toBe("B")
 -- 	end)
 -- end)
@@ -916,16 +915,16 @@ end)
 -- 			},
 -- 		}
 
--- 		local stateMachine = StateMachine.new(initialState, eventsByName)
+-- 		local stateQ = StateQ.new(initialState, eventsByName)
 
 -- 		-- Test getting valid events for the initial state
--- 		local validEvents = stateMachine:getValidEvents()
+-- 		local validEvents = stateQ:getValidEvents()
 -- 		expect(#validEvents).toBe(1)
 -- 		expect(validEvents[1]).toBe("toB")
 
 -- 		-- Test getting valid events after a transition
--- 		stateMachine:handle("toB")
--- 		validEvents = stateMachine:getValidEvents()
+-- 		stateQ:handle("toB")
+-- 		validEvents = stateQ:getValidEvents()
 -- 		expect(#validEvents).toBe(1)
 -- 		expect(validEvents[1]).toBe("toA")
 -- 	end)
@@ -945,8 +944,8 @@ end)
 -- 			},
 -- 		}
 
--- 		local stateMachine = StateMachine.new(X_STATE, eventsByName)
--- 		expect(stateMachine._isDebugEnabled).toBe(false)
+-- 		local stateQ = StateQ.new(X_STATE, eventsByName)
+-- 		expect(stateQ._isDebugEnabled).toBe(false)
 -- 	end)
 
 -- 	describe("setter", function()
@@ -962,7 +961,7 @@ end)
 -- 				},
 -- 			}
 
--- 			local stateMachine = StateMachine.new(X_STATE, eventsByName)
+-- 			local stateQ = StateQ.new(X_STATE, eventsByName)
 
 -- 			local badTypes = {
 -- 				1,
@@ -973,7 +972,7 @@ end)
 
 -- 			for _, badType in badTypes do
 -- 				expect(function()
--- 					stateMachine:setDebugEnabled(badType)
+-- 					stateQ:setDebugEnabled(badType)
 -- 				end).toThrow(`boolean expected, got {typeof(badType)}`)
 -- 			end
 -- 		end)
@@ -990,13 +989,13 @@ end)
 -- 				},
 -- 			}
 
--- 			local stateMachine = StateMachine.new(X_STATE, eventsByName)
+-- 			local stateQ = StateQ.new(X_STATE, eventsByName)
 
--- 			stateMachine:setDebugEnabled(true)
--- 			expect(stateMachine._isDebugEnabled).toBe(true)
+-- 			stateQ:setDebugEnabled(true)
+-- 			expect(stateQ._isDebugEnabled).toBe(true)
 
--- 			stateMachine:setDebugEnabled(false)
--- 			expect(stateMachine._isDebugEnabled).toBe(false)
+-- 			stateQ:setDebugEnabled(false)
+-- 			expect(stateQ._isDebugEnabled).toBe(false)
 -- 		end)
 -- 	end)
 -- end)
@@ -1016,21 +1015,21 @@ end)
 -- 			},
 -- 		}
 
--- 		local stateMachine = StateMachine.new(initialState, eventsByName)
+-- 		local stateQ = StateQ.new(initialState, eventsByName)
 
 -- 		-- Test destroying the state machine
--- 		stateMachine:destroy()
--- 		expect(stateMachine._isDestroyed).toBe(true)
--- 		expect(stateMachine[BEFORE_EVENT_SIGNAL]:getConnectionCount()).toBe(0)
--- 		expect(stateMachine[LEAVING_STATE_SIGNAL]:getConnectionCount()).toBe(0)
--- 		expect(stateMachine[STATE_ENTERED_SIGNAL]:getConnectionCount()).toBe(0)
--- 		expect(stateMachine[AFTER_EVENT_SIGNAL]:getConnectionCount()).toBe(0)
--- 		expect(stateMachine[FINISHED_SIGNAL]:getConnectionCount()).toBe(0)
+-- 		stateQ:destroy()
+-- 		expect(stateQ._isDestroyed).toBe(true)
+-- 		expect(stateQ[BEFORE_EVENT_SIGNAL]:getConnectionCount()).toBe(0)
+-- 		expect(stateQ[LEAVING_STATE_SIGNAL]:getConnectionCount()).toBe(0)
+-- 		expect(stateQ[STATE_ENTERED_SIGNAL]:getConnectionCount()).toBe(0)
+-- 		expect(stateQ[AFTER_EVENT_SIGNAL]:getConnectionCount()).toBe(0)
+-- 		expect(stateQ[FINISHED_SIGNAL]:getConnectionCount()).toBe(0)
 -- 	end)
 -- end)
 
 -- return function()
--- 	local StateMachine = require(script.Parent.Parent.StateMachine)
+-- 	local StateQ = require(script.Parent.Parent.StateQ)
 
 -- 	local function createTestMachine()
 -- 		local states = {
@@ -1086,26 +1085,26 @@ end)
 -- 			},
 -- 		}
 
--- 		local machine = StateMachine.new("A", states)
+-- 		local machine = StateQ.new("A", states)
 -- 		machine:setDebugEnabled(true)
 -- 		return machine
 -- 	end
 
 -- 	describe("new", function()
--- 		it("should create a new StateMachine", function()
+-- 		it("should create a new StateQ", function()
 -- 			local machine = createTestMachine()
 -- 			expect(machine).never.toBeNil()
 -- 		end)
 
 -- 		it("should require an initial state", function()
 -- 			expect(function()
--- 				StateMachine.new()
+-- 				StateQ.new()
 -- 			end).toThrow()
 -- 		end)
 
 -- 		it("should require events", function()
 -- 			expect(function()
--- 				StateMachine.new("A")
+-- 				StateQ.new("A")
 -- 			end).toThrow()
 -- 		end)
 -- 	end)

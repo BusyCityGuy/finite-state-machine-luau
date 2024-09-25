@@ -1,6 +1,6 @@
-# Finite State Machine (FSM) in Luau
+# StateQ: A Finite State Machine (FSM) in Luau
 
-A feature rich and fully typed implementation of a Finite State Machine in [Luau](https://luau-lang.org/), developed for use in Roblox experiences.
+An intuitive fully-typed Finite State Machine in [Luau](https://luau-lang.org/) that supports async transitions by queueing events, developed for use in Roblox experiences.
 
 This project is licensed under the terms of the MIT license. See [LICENSE.md](https://github.com/busycityguy/finite-state-machine-luau/blob/main/LICENSE.md) for details.
 
@@ -51,7 +51,7 @@ A simple state machine diagram for a light switch may look like this, where
 - States are represented as rectangles, and squares indicate the State can be Final
 - Events are represented as capsules
 
-![Screen Shot 2023-12-14 at 18 04 33](https://github.com/BusyCityGuy/finite-state-machine-luau/assets/55513323/3d5b2118-91ea-4427-ac2d-688fb0094d1f)
+![ExampleUsage](https://github.com/BusyCityGuy/finite-state-machine-luau/assets/55513323/3d5b2118-91ea-4427-ac2d-688fb0094d1f)
 
 ```luau
 local LightState = {
@@ -64,7 +64,7 @@ local Event = {
 	SwitchOff = "SwitchOff",
 }
 
-local light = StateMachine.new(LightState.On, {
+local light = StateQ.new(LightState.On, {
 	[Event.SwitchOn] = {
 		canBeFinal = true,
 		from = {
@@ -107,22 +107,22 @@ light:handle(Event.SwitchOn) -- warns "Illegal event `SwitchOn` called during st
 
 # Installation
 
-If your project is set up to build with Rojo, you can add this repository as a submodule of your project by running the following command:
+## Rojo users
 
-`git submodule add https://github.com/BusyCityGuy/finite-state-machine-luau path/to/your/dependencies`
+If your project is set up to build with Rojo, the preferred installation method is using [Wally](https://wally.run/). Add this to your `wally.toml` file:
+> StateQ = "busycityguy/stateq@0.0.4"
 
-<details>
-<summary>These alternative installations are not implemented yet</summary>
+If you're not using Wally, you can add this repository as a submodule of your project by running the following command:
 
-In the future, an alternative installation method will be to download your desired release file from the [Releases](https://github.com/BusyCityGuy/latest) page.
+> git submodule add https://github.com/BusyCityGuy/finite-state-machine-luau path/to/your/dependencies
 
-Provided in the release will be a `.zip` file that can be extracted into your Rojo project, or you can download the `.rbxm` and drag it into Roblox Studio if you're not using Rojo.
+If you want to avoid submodules too, you can download the `.zip` file from the [latest release](https://github.com/BusyCityGuy/finite-state-machine-luau/releases/latest) page.
 
-Also in the future, this project will be published on [Wally](https://wally.run/), and could be installed into your project by adding `finite-state-machine = "busycityguy/finite-state-machine@0.0.0"` to your `wally.toml` file.
+## Non-Rojo users
 
-</details>
+If you aren't using Rojo, you can download the `.rbxm` file from the [latest release](https://github.com/BusyCityGuy/finite-state-machine-luau/releases/latest) page and drag it into Roblox Studio.
 
-# Help!
+# Feedback
 
 If you have other questions, bugs, feature requests, or feedback, please [open an issue](https://github.com/BusyCityGuy/finite-state-machine-luau/issues)!
 
