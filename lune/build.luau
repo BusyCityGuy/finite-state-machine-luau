@@ -1,7 +1,7 @@
 --!strict
 
 --[[
-	Builds the release packages of the finite state machine. Used by CI to build the release packages for uploading to various targets.
+	Builds the release artifacts of the finite state machine. Used by CI to upload to various release targets.
 
 	Since the parent folder is named `lune`, the `lune` cli will automatically look in this directory for scripts to run.
 
@@ -85,7 +85,7 @@ local build_targets = {
 }
 
 for _, buildTarget in build_targets do
-	print(`Building {buildTarget.description}...`)
+	print(`\nBuilding {buildTarget.description} artifact...`)
 	print(buildTarget.command, table.concat(buildTarget.args, " "))
 	local proc = process.spawn(buildTarget.command, buildTarget.args)
 	print(proc.stdout)
