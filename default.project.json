@@ -1,9 +1,9 @@
 {
-	"name": "StateMachine",
-	"tree": {
-		"$path": "src/StateMachine",
-		"Dependencies": {
-			"$path": "Packages"
-		}
-	}
+  "name": "stateq",
+  "tree": {
+    "$path": "src/StateQ",
+    "Dependencies": {
+      "$path": "Packages"
+    }
+  }
 }

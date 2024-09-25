@@ -18,7 +18,7 @@ local stdio = require("@lune/stdio")
 local task = require("@lune/task")
 
 local FORMAT_PATHS = {
-	Path.join("src", "StateMachine"),
+	Path.join("src", "StateQ"),
 	Path.join("src", "TestService"),
 	"lune",
 }

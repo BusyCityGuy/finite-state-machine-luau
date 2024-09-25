@@ -1,6 +1,6 @@
 [package]
-name = "busycityguy/finite-state-machine-luau"
-description = "A feature rich and fully typed implementation of a Finite State Machine in Luau, developed for use in Roblox experiences"
+name = "busycityguy/stateq"
+description = "An intuitive fully-typed Finite State Machine in Luau that supports async transitions by queueing events"
 version = "0.0.0"
 license = "MIT"
 authors = ["BusyCityGuy"]
@@ -8,8 +8,8 @@ realm = "shared"
 registry = "https://github.com/UpliftGames/wally-index"
 exclude = ["*"]
 include = [
-    "src/StateMachine",
-    "src/StateMachine/**",
+    "src/StateQ",
+    "src/StateQ/**",
     "default.project.json",
     "wally.toml",
     "README.md",

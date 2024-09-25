@@ -116,7 +116,7 @@ If you're running tests in studio yourself (not recommended) instead of using th
 
 | Method        | Instructions                                                                                                                                           |
 | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| CLI           | `rojo build test.project.json -o StateMachine-Test.rbxl`                                                                                               |
+| CLI           | `rojo build test.project.json -o StateQ-Test.rbxl`                                                                                                     |
 | VSC Extension | Click Rojo on the status bar at the bottom, mouse over `test.project.json` in the pop-up menu, and click the Build icon on the right of the list item. |
 </details>
 
@@ -174,10 +174,10 @@ You need to set the `FFlagEnableLoadModule` value to `true`. Be sure to restart 
 
 ### Run tests
 
-| Method            | Instructions                                                                                                                                                                                   |
-| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| CLI (recommended) | `lune run test`                                                                                                                                                                                |
-| Roblox Studio     | Open the test place file `StateMachine-Test.rbxl` [built in the above step](#build-the-project) in Roblox Studio and run the place (server only). The output widget will show the test results. |
+| Method            | Instructions                                                                                                                                                                             |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| CLI (recommended) | `lune run test`                                                                                                                                                                          |
+| Roblox Studio     | Open the test place file `StateQ-Test.rbxl` [built in the above step](#build-the-project) in Roblox Studio and run the place (server only). The output widget will show the test results. |
 
 ### Continuous Integration (CI)
 

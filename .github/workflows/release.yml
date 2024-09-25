@@ -92,7 +92,7 @@ jobs:
         with:
           commit_message: "Preprocess release for version ${{ needs.get-version.outputs.version-with-dots }}"
           branch: release-action # TODO: Switch to main once this is tested
-          file_pattern: "README.md wally.toml src/StateMachine/init.luau LICENSE.md"
+          file_pattern: "README.md wally.toml src/StateQ/init.luau LICENSE.md"
 
   create-release:
     name: Create release
@@ -116,53 +116,11 @@ jobs:
       - name: Build with Rojo
         run: ~/.rokit/bin/lune run build ${{ needs.get-version.outputs.version-with-dashes }}
 
-  #   name: Release to Wally
-  #   runs-on: ubuntu-latest
-  #   needs: [install-tools]
+      - name: Create zip file
+        run: zip -r StateQ-${{ needs.get-version.outputs.version-with-dashes }}.zip -i src/StateQ/* default.project.json Packages wally.toml README.md LICENSE.md
 
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4.1.7
+      - name: Login to wally
+        run: wally login --token ${{ secrets.WALLY_ACCESS_TOKEN }}
 
-  #     - name: Build with Rojo
-  #       run: rojo build default.project.json -o StateMachine ${{steps.package-version.outputs.current-version}}.rbxm
-
-  #     - name: create-release
-  #       uses: actions/create-release@latest
-  #       id: create_release
-  #       with:
-  #         draft: false
-  #         prerelease: false
-  #         release_name: ${{ steps.package-version.outputs.current-version }}
-  #         tag_name: ${{ steps.package-version.outputs.current-version }}
-  #         body_path: CHANGELOG.md
-  #       env:
-  #         GITHUB_TOKEN: ${{ github.token }}
-  #     - name: upload rbxmx file to release
-  #       uses: actions/upload-release-asset@v1
-  #       env:
-  #         GITHUB_TOKEN: ${{ github.token }}
-  #       with:
-  #         upload_url: ${{ steps.create_release.outputs.upload_url }}
-  #         asset_path: ./finite-state-machine-${{ steps.package-version.outputs.current-version }}.rbxmx
-  #         asset_name: finite-state-machine-${{ steps.package-version.outputs.current-version }}.rbxmx
-  #         asset_content_type: form
-  #     - name: upload rbxmx file to Roblox
-  #       run: |
-  #         cd ./scripts
-  #         python upload_model.py -a ${{ secrets.ASSET_ID }} -f ../finite-state-machine-${{ steps.package-version.outputs.current-version }}.rbxmx -r "${{ secrets.UPLOADER_BOT_ROBLOSECURITY }}"
-  #         cd ..
-  #     - name: prepare wally package contents
-  #       run: |
-  #         mkdir -p ~/temp/finite-state-machine
-  #         cp -r ./{include,out} ~/temp/finite-state-machine/
-  #         cp ./{CHANGELOG.md,LICENSE,README.md,wally.lock,wally.toml} ~/temp/finite-state-machine/
-  #         cp ./standalone-model.project.json ~/temp/finite-state-machine/default.project.json
-  #         mkdir ~/temp/finite-state-machine/node_modules
-  #         cp -r ./node_modules/@rbxts ~/temp/finite-state-machine/node_modules/
-  #     - name: prepare wally auth
-  #       run: |
-  #         mkdir ~/.wally
-  #         echo -e '${{ secrets.WALLY_AUTH }}' > ~/.wally/auth.toml
-  #     - name: publish wally package
-  #       run: wally publish --project-path ~/temp/finite-state-machine/
+      # - name: Publish package to wally
+        run: wally publish --output build/wally/StateQ

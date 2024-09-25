@@ -1,6 +1,6 @@
-# Finite State Machine (FSM) in Luau
+# StateQ: A Finite State Machine (FSM) in Luau
 
-A feature rich and fully typed implementation of a Finite State Machine in [Luau](https://luau-lang.org/), developed for use in Roblox experiences.
+An intuitive fully-typed Finite State Machine in [Luau](https://luau-lang.org/) that supports async transitions by queueing events, developed for use in Roblox experiences.
 
 This project is licensed under the terms of the MIT license. See [LICENSE.md](https://github.com/busycityguy/finite-state-machine-luau/blob/main/LICENSE.md) for details.
 
@@ -51,7 +51,7 @@ A simple state machine diagram for a light switch may look like this, where
 - States are represented as rectangles, and squares indicate the State can be Final
 - Events are represented as capsules
 
-![Screen Shot 2023-12-14 at 18 04 33](https://github.com/BusyCityGuy/finite-state-machine-luau/assets/55513323/3d5b2118-91ea-4427-ac2d-688fb0094d1f)
+![ExampleUsage](https://github.com/BusyCityGuy/finite-state-machine-luau/assets/55513323/3d5b2118-91ea-4427-ac2d-688fb0094d1f)
 
 ```luau
 local LightState = {
@@ -64,7 +64,7 @@ local Event = {
 	SwitchOff = "SwitchOff",
 }
 
-local light = StateMachine.new(LightState.On, {
+local light = StateQ.new(LightState.On, {
 	[Event.SwitchOn] = {
 		canBeFinal = true,
 		from = {

@@ -47,13 +47,13 @@ local replacementData = {
 	},
 	{
 		description = "package version",
-		paths = { "src/StateMachine/init.luau" },
+		paths = { "src/StateQ/init.luau" },
 		pattern = "%-%- Version: ([0-9]+%.[0-9]+%.[0-9]+)",
 		replacement = `-- Version: {version}`,
 	},
 	{
 		description = "copyright year",
-		paths = { "src/StateMachine/init.luau", "LICENSE.md" },
+		paths = { "src/StateQ/init.luau", "LICENSE.md" },
 		pattern = "Copyright %(c%) (%d+) BusyCityGuy",
 		replacement = `Copyright (c) {DateTime.now():toUniversalTime().year} BusyCityGuy`,
 	},
