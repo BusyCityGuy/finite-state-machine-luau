@@ -211,3 +211,12 @@ Alternatively, you can run individual steps yourself:
 There is an additional script available to fix formatting with StyLua, that does not run on GitHub:
 
 > lune run formatFix
+
+## Releasing
+
+1. To make a release, use the GitHub web interface to [create a new release](https://github.com/BusyCityGuy/finite-state-machine-luau/releases/new).
+1. Choose a tag with a version number like `v0.0.0`, beginning with `v` and using semantic versioning. No suffix like `-pre` is supported, only numbers as shown.
+1. Create a release title, preferably something like "Version 0.0.0" to be consistent with the tag.
+1. Describe the changes in the release
+1. Publish release
+1. A GitHub Actions workflow will automatically run and upload .zip and .rbxm artifacts to the release. It will also automatically publish the release to Wally, and update hardcoded numbers throughout the codebase like versions and copyright years.
