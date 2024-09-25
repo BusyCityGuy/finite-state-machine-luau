@@ -94,7 +94,7 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v5.0.1
         with:
           commit_message: "Preprocess release for version ${{ needs.get-version.outputs.version-with-dots }}"
-          branch: release-action # TODO: Switch to main once this is tested
+          branch: main
           file_pattern: "README.md wally.toml src/StateQ/init.luau LICENSE.md"
 
   create-release-artifacts:
@@ -161,11 +161,8 @@ jobs:
       - name: Add rokit tools to PATH
         run: echo "$HOME/.rokit/bin" >> $GITHUB_PATH
 
-      - name: Log in to Wally
-        run: wally login --token ${{ secrets.WALLY_ACCESS_TOKEN }}
-
-      # - name: Publish package to Wally
-      #   run: wally publish --output build/wally/stateq-${{ needs.get-version.outputs.version-with-dashes}}.zip
+      - name: Publish package to Wally
+        run: wally publish --token ${{ secrets.WALLY_ACCESS_TOKEN }}
 
   upload-github-artifacts:
     name: Upload artifacts to the GitHub release
