@@ -176,7 +176,9 @@ jobs:
       - name: Restore build artifacts
         uses: actions/cache@v4.0.2
         with:
-          path: build
+          path: |
+            build
+            wally.toml
           key: artifacts-${{ needs.get-version.outputs.tag-name }}
 
       - name: Print files
