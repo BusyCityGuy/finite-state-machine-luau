@@ -84,6 +84,8 @@ local build_targets = {
 	},
 }
 
+local debugProc = process.spawn("ls", { "-l" })
+print(debugProc.stdout)
 for _, buildTarget in build_targets do
 	print(`Building {buildTarget.description}...`)
 	print(buildTarget.command, table.concat(buildTarget.args, " "))
