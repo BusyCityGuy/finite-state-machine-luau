@@ -123,4 +123,4 @@ jobs:
         run: wally login --token ${{ secrets.WALLY_ACCESS_TOKEN }}
 
       # - name: Publish package to wally
-        run: wally publish --output build/wally/StateQ
+      #   run: wally publish --output build/wally/StateQ
