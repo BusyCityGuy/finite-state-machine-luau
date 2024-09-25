@@ -171,6 +171,8 @@ jobs:
     name: Upload artifacts to the GitHub release
     runs-on: ubuntu-latest
     needs: [get-version, create-release-artifacts]
+    permissions:
+      contents: write
 
     steps:
       - name: Restore build artifacts
