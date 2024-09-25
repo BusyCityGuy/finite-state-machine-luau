@@ -84,8 +84,11 @@ jobs:
             DevPackages
           key: tools-${{ hashFiles('rokit.toml') }}
 
+      - name: Add rokit tools to PATH
+        run: echo "$HOME/.rokit/bin" >> $GITHUB_PATH
+
       - name: Locally update version & copyright year in files
-        run: ~/.rokit/bin/lune run preprocessRelease ${{ needs.get-version.outputs.version-with-dots }}
+        run: lune run preprocessRelease ${{ needs.get-version.outputs.version-with-dots }}
 
       - name: Commit version & copyright year updates
         uses: stefanzweifel/git-auto-commit-action@v5.0.1
@@ -113,8 +116,11 @@ jobs:
             DevPackages
           key: tools-${{ hashFiles('rokit.toml') }}
 
+      - name: Add rokit tools to PATH
+        run: echo "$HOME/.rokit/bin" >> $GITHUB_PATH
+
       - name: Build release targets
-        run: ~/.rokit/bin/lune run build ${{ needs.get-version.outputs.version-with-dashes }}
+        run: lune run build ${{ needs.get-version.outputs.version-with-dashes }}
 
       - name: Login to wally
         run: wally login --token ${{ secrets.WALLY_ACCESS_TOKEN }}
