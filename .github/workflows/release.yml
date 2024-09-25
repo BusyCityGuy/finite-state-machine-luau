@@ -158,6 +158,9 @@ jobs:
             wally.toml
           key: artifacts-${{ needs.get-version.outputs.tag-name }}
 
+      - name: Add rokit tools to PATH
+        run: echo "$HOME/.rokit/bin" >> $GITHUB_PATH
+
       - name: Log in to Wally
         run: wally login --token ${{ secrets.WALLY_ACCESS_TOKEN }}
 
@@ -170,14 +173,14 @@ jobs:
     needs: [get-version, create-release-artifacts]
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4.1.7
-
       - name: Restore build artifacts
         uses: actions/cache@v4.0.2
         with:
           path: build
           key: artifacts-${{ needs.get-version.outputs.tag-name }}
+
+      - name: Print files
+        run: ls -R
 
       - name: Upload zip artifact to the GitHub release
         uses: actions/upload-release-asset@v1.0.2
