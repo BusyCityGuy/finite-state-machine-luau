@@ -70,9 +70,11 @@ jobs:
     environment: Release Preprocessor
     permissions:
       contents: write
+    outputs:
+      commit-hash: ${{ steps.commit-and-push.outputs.commit_hash }}
 
     steps:
-      - uses: actions/create-github-app-token@v1.7.0
+      - uses: actions/create-github-app-token@v1.11.0
         id: release-preprocessor-bot-token
         with:
           app-id: ${{ vars.RELEASE_PREPROCESSOR_APP_ID }}
@@ -100,6 +102,7 @@ jobs:
         run: lune run preprocessRelease ${{ needs.get-version.outputs.version-with-dots }}
 
       - name: Commit version & copyright year updates
+        id: commit-and-push
         uses: stefanzweifel/git-auto-commit-action@v5.0.1
         with:
           commit_message: "Preprocess release for version ${{ needs.get-version.outputs.version-with-dots }}"
@@ -115,7 +118,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4.1.7
         with:
-          ref: ${{ github.ref }}
+          ref: ${{ needs.preprocess-release.outputs.commit-hash }}
 
       - name: Restore installed items
         uses: actions/cache@v4.0.2
@@ -151,7 +154,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4.1.7
         with:
-          ref: ${{ github.ref }}
+          ref: ${{ needs.preprocess-release.outputs.commit-hash }}
 
       - name: Restore installed items
         uses: actions/cache@v4.0.2
