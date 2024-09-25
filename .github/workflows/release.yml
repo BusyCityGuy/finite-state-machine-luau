@@ -161,8 +161,11 @@ jobs:
       - name: Add rokit tools to PATH
         run: echo "$HOME/.rokit/bin" >> $GITHUB_PATH
 
+      - name: Log in to Wally
+        run: wally login --token ${{ secrets.WALLY_ACCESS_TOKEN }}
+
       - name: Publish package to Wally
-        run: wally publish --token ${{ secrets.WALLY_ACCESS_TOKEN }}
+        run: wally publish
 
   upload-github-artifacts:
     name: Upload artifacts to the GitHub release
