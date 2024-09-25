@@ -48,10 +48,14 @@ jobs:
         uses: CompeyDev/setup-rokit@v0.1.2
 
       - name: Setup Lune
-        run: lune setup
+        run: |
+          echo $PATH
+          lune setup
 
       - name: Install dependencies with Wally
-        run: wally install
+        run: |
+          echo $PATH
+          wally install
 
       - name: Cache installed items
         uses: actions/cache@v4.0.2
@@ -88,7 +92,9 @@ jobs:
         run: echo "$HOME/.rokit/bin" >> $GITHUB_PATH
 
       - name: Locally update version & copyright year in files
-        run: lune run preprocessRelease ${{ needs.get-version.outputs.version-with-dots }}
+        run: |
+          echo $PATH
+          lune run preprocessRelease ${{ needs.get-version.outputs.version-with-dots }}
 
       - name: Commit version & copyright year updates
         uses: stefanzweifel/git-auto-commit-action@v5.0.1
@@ -120,10 +126,14 @@ jobs:
         run: echo "$HOME/.rokit/bin" >> $GITHUB_PATH
 
       - name: Build release targets
-        run: lune run build ${{ needs.get-version.outputs.version-with-dashes }}
+        run: |
+          echo $PATH
+          lune run build ${{ needs.get-version.outputs.version-with-dashes }}
 
       - name: Login to wally
-        run: wally login --token ${{ secrets.WALLY_ACCESS_TOKEN }}
+        run: |
+          echo $PATH
+          wally login --token ${{ secrets.WALLY_ACCESS_TOKEN }}
 
       # - name: Publish package to wally
       #   run: wally publish --output build/wally/StateQ
