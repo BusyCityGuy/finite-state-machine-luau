@@ -116,11 +116,11 @@ If you're not using Wally, you can add this repository as a submodule of your pr
 
 > git submodule add https://github.com/BusyCityGuy/finite-state-machine-luau path/to/your/dependencies
 
-If you want to avoid submodules too, you can download the `.zip` file from the [latest release](<https://github.com/BusyCityGuy/latest>) page.
+If you want to avoid submodules too, you can download the `.zip` file from the [latest release](https://github.com/BusyCityGuy/finite-state-machine-luau/releases/latest) page.
 
 ## Non-Rojo users
 
-If you aren't using Rojo, you can download the `.rbxm` file from the [latest release](<https://github.com/BusyCityGuy/latest>) page and drag it into Roblox Studio.
+If you aren't using Rojo, you can download the `.rbxm` file from the [latest release](https://github.com/BusyCityGuy/finite-state-machine-luau/releases/latest) page and drag it into Roblox Studio.
 
 # Feedback
 
