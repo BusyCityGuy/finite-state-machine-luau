@@ -1,5 +1,5 @@
 {
-  "name": "stateq",
+  "name": "StateQ",
   "tree": {
     "$path": "src/StateQ",
     "Dependencies": {

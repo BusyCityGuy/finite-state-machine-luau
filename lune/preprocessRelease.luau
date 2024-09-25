@@ -36,8 +36,8 @@ local replacementData = {
 	{
 		description = "package version",
 		paths = { "README.md" },
-		pattern = "finite%-state%-machine@([0-9]+%.[0-9]+%.[0-9]+)",
-		replacement = `finite-state-machine@{version}`,
+		pattern = "stateq@([0-9]+%.[0-9]+%.[0-9]+)",
+		replacement = `stateq@{version}`,
 	},
 	{
 		description = "package version",
