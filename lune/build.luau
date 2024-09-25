@@ -43,6 +43,7 @@ local buildFolder = "build"
 local function ensurePath(...: string)
 	local path = Path.join(...)
 	if not fs.isDir(path) then
+		print("Creating path", path)
 		fs.writeDir(path)
 	end
 	return path

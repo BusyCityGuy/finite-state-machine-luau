@@ -113,11 +113,8 @@ jobs:
             DevPackages
           key: tools-${{ hashFiles('rokit.toml') }}
 
-      - name: Build with Rojo
+      - name: Build release targets
         run: ~/.rokit/bin/lune run build ${{ needs.get-version.outputs.version-with-dashes }}
-
-      - name: Create zip file
-        run: zip -r StateQ-${{ needs.get-version.outputs.version-with-dashes }}.zip -i src/StateQ/* default.project.json Packages wally.toml README.md LICENSE.md
 
       - name: Login to wally
         run: wally login --token ${{ secrets.WALLY_ACCESS_TOKEN }}
