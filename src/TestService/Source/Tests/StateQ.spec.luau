@@ -3,10 +3,10 @@
 -- local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TestService = game:GetService("TestService")
 
-local JestGlobals = require(TestService.Dependencies.JestGlobals)
--- local Freeze = require(TestService.Dependencies.Freeze)
--- local Logger = require(ReplicatedStorage.Source.StateQ.Modules.Logger)
--- local StateQ = require(ReplicatedStorage.Source.StateQ)
+local JestGlobals = require(TestService.Source.DevPackages.JestGlobals)
+-- local Freeze = require(DevPackages.Freeze)
+-- local Logger = require(ReplicatedStorage.Source.Packages.StateQ.Modules.Logger)
+-- local StateQ = require(ReplicatedStorage.Source.Packages.StateQ)
 
 -- Shortening things is generally bad practice, but this greatly improves readability of tests
 -- local Dict = Freeze.Dictionary

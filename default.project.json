@@ -1,9 +1,6 @@
 {
-  "name": "StateQ",
-  "tree": {
-    "$path": "src/StateQ",
-    "Dependencies": {
-      "$path": "Packages"
+    "name": "StateQ",
+    "tree": {
+        "$path": "src/StateQ"
     }
-  }
 }

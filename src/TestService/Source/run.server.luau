@@ -1,6 +1,6 @@
 local TestService = game:GetService("TestService")
 
-local Jest = require(TestService.Dependencies.Jest)
+local Jest = require(TestService.Source.DevPackages.Jest)
 local runCLI = Jest.runCLI
 
 -- Jest.TestBootstrap:run({ TestService.Source.Tests })
