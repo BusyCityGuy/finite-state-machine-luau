@@ -116,7 +116,7 @@ light:handle(Event.SwitchOn) -- warns "Illegal event `SwitchOn` called during st
 If your project is set up to build with Rojo, the preferred installation method is using [Wally](https://wally.run/). Add this to your `wally.toml` file:
 
 ```bash
-> StateQ = "busycityguy/stateq@0.0.5"
+> StateQ = "busycityguy/stateq@0.0.6"
 ```
 
 If you're not using Wally, you can add this repository as a submodule of your project by running the following command:
