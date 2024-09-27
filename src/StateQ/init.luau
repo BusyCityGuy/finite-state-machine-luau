@@ -110,10 +110,16 @@
 			light:handle(Event.SwitchOn) -- errors "Illegal event `SwitchOn` called during state `On`" with a stack trace
 --]]
 
+-- This module should be in a folder called Packages that contains other module dependencies.
+-- If installed as an rbxm, the Packages folder should be included as the parent of this module already.
+-- If installed with Wally, this should already be automatically set up as a descendant of the Packages folder with references to dependencies created.
+-- If installed as a submodule, you'll need to edit your project.json file to set the path for this module inside of a Packages folder, and install dependencies there.
+local Packages = script.Parent
+
 local Logger = require(script.Modules.Logger)
 local Signal = require(script.Modules.Signal)
 local ThreadQueue = require(script.Modules.ThreadQueue)
-local t = require(script.Dependencies.t)
+local t = require(Packages.t)
 
 -- These types are added for readability to disambiguate what the string is meant to represent in types
 type State = string

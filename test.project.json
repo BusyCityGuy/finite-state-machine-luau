@@ -1,33 +1,32 @@
 {
-  "emitLegacyScripts": false,
-  "name": "stateq-test",
-  "tree": {
-    "$className": "DataModel",
-    "ReplicatedStorage": {
-      "$className": "ReplicatedStorage",
-      "Source": {
-        "$className": "Folder",
-        "StateQ": {
-          "$path": "src/StateQ",
-          "Dependencies": {
-            "$path": "Packages"
-          }
+    "emitLegacyScripts": false,
+    "name": "StateQ-Test",
+    "tree": {
+        "$className": "DataModel",
+        "ReplicatedStorage": {
+            "$className": "ReplicatedStorage",
+            "Source": {
+                "$className": "Folder",
+                "Packages": {
+                    "$path": "Packages",
+                    "StateQ": {
+                        "$path": "src/StateQ"
+                    }
+                }
+            }
+        },
+        "TestService": {
+            "$className": "TestService",
+            "$properties": {
+                "ExecuteWithStudioRun": true
+            },
+            "Source": {
+                "$className": "Folder",
+                "$path": "src/TestService/Source",
+                "DevPackages": {
+                    "$path": "DevPackages"
+                }
+            }
         }
-      }
-    },
-    "TestService": {
-      "$className": "TestService",
-      "$properties": {
-        "ExecuteWithStudioRun": true
-      },
-      "Source": {
-        "$className": "Folder",
-        "$path": "src/TestService/Source"
-      },
-      "Dependencies": {
-        "$className": "Folder",
-        "$path": "DevPackages"
-      }
     }
-  }
 }

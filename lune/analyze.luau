@@ -18,7 +18,7 @@ local task = require("@lune/task")
 local ANALYZE_PATHS: { { path: string, project: string?, sourceMap: string? } } = {
 	{
 		path = Path.join("src", "StateQ"),
-		project = "default.project.json",
+		project = "rbxm.project.json",
 		sourceMap = "stateQSourcemap.json",
 	},
 	{

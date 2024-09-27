@@ -23,7 +23,7 @@ Various tools used by the project are installed with [Rokit](https://github.com/
 1. Run the following command in the repository directory:
 
 ```bash
-rokit install
+> rokit install
 ```
 
 This installs tools from `rokit.toml` and adds them to your system environment path variable so you can use the tools in the command line.
@@ -34,6 +34,7 @@ Additionally, if you're using VS Code it's recommended to install the following 
 - [johnnymorganz.stylua](https://marketplace.visualstudio.com/items?itemName=JohnnyMorganz.stylua)
 - [kampfkarren.selene-vscode](https://marketplace.visualstudio.com/items?itemName=Kampfkarren.selene-vscode)
 - [streetsidesoftware.code-spell-checker](https://marketplace.visualstudio.com/items?itemName=streetsidesoftware.code-spell-checker)
+
 > [!TIP]
 > You should be automatically prompted to install these plugins when opening the project in VS Code because they're listed in [extensions.json](.vscode/extensions.json)
 
@@ -58,7 +59,7 @@ The following tools are installed by Rokit:
 This project depends on packages to run and for testing. These packages are installed by Wally by running the following command:
 
 ```bash
-wally install
+> wally install
 ```
 
 This will create `Packages` and `DevPackages` folders in the top level of the directory that are referenced by the `*.project.json` files.
@@ -83,8 +84,9 @@ The following packages are installed as dev dependencies:
 Lune provides type definitions and documentation, but has to be configured for your editor. To do so, do the following steps (source: [Lune Editor Setup](https://lune-org.github.io/docs/getting-started/4-editor-setup))
 
 Run the command:
+
 ```bash
-lune setup
+> lune setup
 ```
 
 Then, modify your editor settings. For VS Code, open [`settings.json`](./.vscode/settings.json) and verify it contains the following:
@@ -102,12 +104,21 @@ An example [`settings.json`](./.vscode/settings.json) file is provided (see [`se
 
 Rojo builds from json files that map files on your file system to locations in the roblox data model. This project includes two project.json files:
 
-| File                   | Purpose                                                                                                                                                                                                                                                       |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [`default.project.json`](./default.project.json) | The distributable consumer build in the form of a single ModuleScript and its children. This defines the structure when a consumer links this project into their `project.json` file.                                                 |
-| [`test.project.json`](./test.project.json)       | Useful for developing this project, because it defines an entire place file that can be opened and synced rather than just the ModuleScript. This is the one you should build and serve with Rojo during development of this project. |
+| File                                             | Purpose                                                                                                                                                                                                                                                 |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`test.project.json`](./test.project.json)       | Useful for developing this project, because it defines an entire place file that can be opened, synced, and tested. This is the one you should build and serve with Rojo during development of this project.                                              |
+| [`rbxm.project.json`](./rbxm.project.json)       | The distributable rbxm build in the form of a ModuleScript and its children inside a Packages folder containing dependencies. This is built and made available on each Release as a downloadable artifact.                                              |
+| [`default.project.json`](./default.project.json) | The standalone module without dependencies included. This defines the structure when a consumer links this project into their `project.json` file as a submodule, requiring the consumer to install dependencies and place this into the Packages folder. |
 
 If you plan to [run tests](#run-tests) from CLI (recommended), the test runner script automatically builds before running tests. You don't need to build it yourself.
+
+There's also an available Lune command to build artifacts for each build target, like the CD script does.
+
+```bash
+> lune run build
+```
+
+This creates a `build` folder containing a subfolder for each build target (rbxm, zip, wally tar), which contains the artifact for that build target.
 
 <details>
 <summary>
@@ -118,6 +129,7 @@ If you're running tests in studio yourself (not recommended) instead of using th
 | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | CLI           | `rojo build test.project.json -o StateQ-Test.rbxl`                                                                                                     |
 | VSC Extension | Click Rojo on the status bar at the bottom, mouse over `test.project.json` in the pop-up menu, and click the Build icon on the right of the list item. |
+
 </details>
 
 ## Sync file changes to studio
@@ -166,8 +178,8 @@ However, running tests in Roblox Studio requires flipping the `FFlagEnableLoadMo
 
 This instructions to flip this flag differ on Mac vs Windows.
 
-* **For Mac users:** see [this issue](https://github.com/jsdotlua/jest-lua/issues/6).
-* **For Windows users:** see [this devforum post](https://devforum.roblox.com/t/how-to-return-altenter-to-its-prior-functionality/997206)
+- **For Mac users:** see [this issue](https://github.com/jsdotlua/jest-lua/issues/6).
+- **For Windows users:** see [this devforum post](https://devforum.roblox.com/t/how-to-return-altenter-to-its-prior-functionality/997206)
 
 You need to set the `FFlagEnableLoadModule` value to `true`. Be sure to restart Roblox Studio after flipping the flag.
 </details>
@@ -179,7 +191,7 @@ You need to set the `FFlagEnableLoadModule` value to `true`. Be sure to restart 
 | CLI (recommended) | `lune run test`                                                                                                                                                                          |
 | Roblox Studio     | Open the test place file `StateQ-Test.rbxl` [built in the above step](#build-the-project) in Roblox Studio and run the place (server only). The output widget will show the test results. |
 
-### Continuous Integration (CI)
+## Continuous integration (CI)
 
 CI checks are set up to run on pull requests. These checks must pass before merging, including:
 
@@ -188,35 +200,47 @@ CI checks are set up to run on pull requests. These checks must pass before merg
 1. `analyze` with luau-lsp
 1. `test` with jest running in Lune
 
-#### Running CI Locally
+### Running CI locally
 
 To run the same CI checks locally that would run on GitHub, a number of Lune scripts are provided.
 
 From the project directory, you can run the following:
 
+```bash
 > lune run ci
+```
 
 This will run all the same checks that would run on GitHub.
 
 Alternatively, you can run individual steps yourself:
 
+```bash
 > lune run lint
-
 > lune run formatCheck
-
 > lune run analyze
-
 > lune run test
+```
 
 There is an additional script available to fix formatting with StyLua, that does not run on GitHub:
 
+```bash
 > lune run formatFix
+```
 
-## Releasing
+## Creating a release
 
 1. To make a release, use the GitHub web interface to [create a new release](https://github.com/BusyCityGuy/finite-state-machine-luau/releases/new).
 1. Choose a tag with a version number like `v0.0.0`, beginning with `v` and using semantic versioning. No suffix like `-pre` is supported, only numbers as shown.
 1. Create a release title, preferably something like "Version 0.0.0" to be consistent with the tag.
 1. Describe the changes in the release
 1. Publish release
-1. A GitHub Actions workflow will automatically run and upload .zip and .rbxm artifacts to the release. It will also automatically publish the release to Wally, and update hardcoded numbers throughout the codebase like versions and copyright years.
+
+## Continuous deployment (CD)
+
+When a release is created, a GitHub Actions workflow automatically runs that does the following steps:
+
+1. Performs preprocessing to update hardcoded numbers in the codebase, like versions and copyright years
+1. Commits these preprocessing changes to the main branch
+1. Builds artifacts for each build target
+1. Uploads the `.zip` and `.rbxm` artifacts to the release on GitHub
+1. Publishes the `.tar` package to Wally

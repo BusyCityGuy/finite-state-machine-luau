@@ -23,20 +23,20 @@ These signals, transition callbacks, and state changes are processed in the foll
 ![SequenceDiagram](https://github.com/BusyCityGuy/finite-state-machine-luau/assets/55513323/9ace09e3-a16e-474b-83ca-aac91cd69492)
 
 1. Fire `beforeEvent` signal
-   - with arguments `eventName`, `beforeState`
+    - with arguments `eventName`, `beforeState`
 1. Call `transition.beforeAsync()` (required, returns next state)
-   - with the VarArgs from `:handle(eventName, transitionArgs...)`
+    - with the VarArgs from `:handle(eventName, transitionArgs...)`
 1. Fire `leavingState` signal
-   - with arguments `beforeState, afterState`
+    - with arguments `beforeState, afterState`
 1. Update `_currentState` to next state
 1. Fire `stateEntered` signal
-   - with arguments `afterState, beforeState`
+    - with arguments `afterState, beforeState`
 1. Call `transition.afterAsync()` (if specified)
-   - with the VarArgs from `:handle(eventName, transitionArgs...)`
+    - with the VarArgs from `:handle(eventName, transitionArgs...)`
 1. Fire `afterEvent` signal
-   - with arguments `eventName, afterState, beforeState`
+    - with arguments `eventName, afterState, beforeState`
 1. Fire `finished` signal if next state from `beforeAsync()` was `nil`
-   - with argument `beforeState`
+    - with argument `beforeState`
 
 Transitions can be asynchronous, which is supported by queuing each Event submitted via :handle() and processing them in First-In-First-Out (FIFO) order. The next Event starts processing immediately after the previous Event's handler fires `afterEvent`.
 
@@ -54,6 +54,10 @@ A simple state machine diagram for a light switch may look like this, where
 ![ExampleUsage](https://github.com/BusyCityGuy/finite-state-machine-luau/assets/55513323/3d5b2118-91ea-4427-ac2d-688fb0094d1f)
 
 ```luau
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local StateQ = require(ReplicatedStorage.Packages.StateQ)
+
 local LightState = {
 	On = "On",
 	Off = "Off",
@@ -110,17 +114,22 @@ light:handle(Event.SwitchOn) -- warns "Illegal event `SwitchOn` called during st
 ## Rojo users
 
 If your project is set up to build with Rojo, the preferred installation method is using [Wally](https://wally.run/). Add this to your `wally.toml` file:
+
+```bash
 > StateQ = "busycityguy/stateq@0.0.5"
+```
 
 If you're not using Wally, you can add this repository as a submodule of your project by running the following command:
 
-> git submodule add https://github.com/BusyCityGuy/finite-state-machine-luau path/to/your/dependencies
+```bash
+> git submodule add <https://github.com/BusyCityGuy/finite-state-machine-luau> path/to/your/dependencies
+```
 
 If you want to avoid submodules too, you can download the `.zip` file from the [latest release](https://github.com/BusyCityGuy/finite-state-machine-luau/releases/latest) page.
 
 ## Non-Rojo users
 
-If you aren't using Rojo, you can download the `.rbxm` file from the [latest release](https://github.com/BusyCityGuy/finite-state-machine-luau/releases/latest) page and drag it into Roblox Studio.
+If you aren't using Rojo, you can download the `.rbxm` file from the [latest release](https://github.com/BusyCityGuy/finite-state-machine-luau/releases/latest) page and drag it into Roblox Studio, placing the `Packages` folder in `ReplicatedStorage`.
 
 # Feedback
 
