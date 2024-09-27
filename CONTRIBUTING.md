@@ -112,7 +112,7 @@ Rojo builds from json files that map files on your file system to locations in t
 
 If you plan to [run tests](#run-tests) from CLI (recommended), the test runner script automatically builds before running tests. You don't need to build it yourself.
 
-There's also an available Lune command to build artifacts for each build target, like the CI script does.
+There's also an available Lune command to build artifacts for each build target, like the CD script does.
 
 ```bash
 > lune run build
