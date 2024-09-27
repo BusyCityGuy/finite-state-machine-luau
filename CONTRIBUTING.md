@@ -223,7 +223,9 @@ Alternatively, you can run individual steps yourself:
 
 There is an additional script available to fix formatting with StyLua, that does not run on GitHub:
 
-lune run formatFix
+```bash
+> lune run formatFix
+```
 
 ## Creating a release
 
