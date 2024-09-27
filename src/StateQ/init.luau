@@ -112,7 +112,7 @@
 
 -- This module should be in a folder called Packages that contains other module dependencies.
 -- If installed as an rbxm, the Packages folder should be included as the parent of this module already.
--- If installed with Wally, this should already be in the Packages folder.
+-- If installed with Wally, this should already be automatically set up as a descendant of the Packages folder with references to dependencies created.
 -- If installed as a submodule, you'll need to edit your project.json file to set the path for this module inside of a Packages folder, and install dependencies there.
 local Packages = script.Parent
 
