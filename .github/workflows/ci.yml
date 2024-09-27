@@ -114,6 +114,7 @@ jobs:
 
       - name: Analyze StateQ with luau-lsp
         run: |
+          ./scripts/sourcemap.sh rbxm.project.json stateQSourcemap.json
           ./scripts/analyze.sh stateQSourcemap.json src/StateQ
 
       - name: Analyze tests with luau-lsp
