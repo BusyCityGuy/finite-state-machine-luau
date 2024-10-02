@@ -5,5 +5,11 @@
     },
     "luau-lsp.sourcemap.rojoProjectFile": "test.project.json",
     "luau-lsp.ignoreGlobs": ["**/*.d.luau", "*Packages/**"],
-    "cSpell.words": ["rokit", "rbxl", "rojo"]
+    "cSpell.words": [
+        "rokit",
+        "ewrite",
+        "rbxl",
+        "rojo",
+        "typedefs"
+  ]
 }
