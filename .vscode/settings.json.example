@@ -1,19 +1,15 @@
 {
-  "luau-lsp.require.mode": "relativeToFile",
-  "luau-lsp.require.directoryAliases": {
-    "@lune/": "~/.lune/.typedefs/0.8.8/"
-  },
-  "luau-lsp.sourcemap.rojoProjectFile": "test.project.json",
-  "luau-lsp.ignoreGlobs": [
-    "**/_Index/**",
-    "**/*.d.luau",
-    "*Packages/**"
-  ],
-  "cSpell.words": [
-    "rokit",
-    "ewrite",
-    "rbxl",
-    "rojo",
-    "typedefs"
+    "luau-lsp.require.mode": "relativeToFile",
+    "luau-lsp.require.directoryAliases": {
+        "@lune/": "~/.lune/.typedefs/0.8.8/"
+    },
+    "luau-lsp.sourcemap.rojoProjectFile": "test.project.json",
+    "luau-lsp.ignoreGlobs": ["**/*.d.luau", "*Packages/**"],
+    "cSpell.words": [
+        "rokit",
+        "ewrite",
+        "rbxl",
+        "rojo",
+        "typedefs"
   ]
 }

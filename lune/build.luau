@@ -55,9 +55,9 @@ local build_targets = {
 		command = "rojo",
 		args = {
 			"build",
-			"default.project.json",
+			"rbxm.project.json",
 			"--output",
-			`{Path.join(ensurePath(buildFolder, "rbxm"), `{fileName}.rbxm`)}`,
+			Path.join(ensurePath(buildFolder, "rbxm"), `{fileName}.rbxm`),
 		},
 	},
 	{
@@ -66,7 +66,7 @@ local build_targets = {
 		args = {
 			"package",
 			"--output",
-			`{Path.join(ensurePath(buildFolder, "wally"), fileName:lower())}`,
+			Path.join(ensurePath(buildFolder, "wally"), `{fileName:lower()}.tar`),
 		},
 	},
 	{
@@ -74,7 +74,7 @@ local build_targets = {
 		command = "zip",
 		args = {
 			"-r",
-			`{Path.join(ensurePath(buildFolder, "zip"), fileName)}.zip`,
+			Path.join(ensurePath(buildFolder, "zip"), `{fileName}.zip`),
 			"src/StateQ",
 			"default.project.json",
 			"Packages",

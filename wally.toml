@@ -1,13 +1,14 @@
 [package]
 name = "busycityguy/stateq"
 description = "An intuitive fully-typed Finite State Machine in Luau that supports async transitions by queueing events"
-version = "0.0.4"
+version = "0.0.6"
 license = "MIT"
 authors = ["BusyCityGuy"]
 realm = "shared"
 registry = "https://github.com/UpliftGames/wally-index"
 exclude = ["*"]
 include = [
+    "src",
     "src/StateQ",
     "src/StateQ/**",
     "default.project.json",
