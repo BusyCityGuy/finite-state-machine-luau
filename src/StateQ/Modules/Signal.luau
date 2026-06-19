@@ -137,6 +137,11 @@ function Signal.DisconnectAll(self: ClassType)
 	self._handlerListHead = nil
 end
 
+-- Returns true if at least one handler is currently connected.
+function Signal.hasAnyConnection(self: ClassType): boolean
+	return self._handlerListHead ~= nil
+end
+
 -- Signal:Fire(...) implemented by running the handler functions on the
 -- coRunnerThread, and any time the resulting thread yielded without returning
 -- to us, that means that it yielded to the Roblox scheduler and has been taken
