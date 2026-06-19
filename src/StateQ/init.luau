@@ -330,7 +330,12 @@ function StateQ._queueEventAsync(
 		self.beforeEvent:Fire(eventName, beforeState)
 
 		local beforeAsyncSuccess, beforeAsyncResult = xpcall(transition.beforeAsync, errorTraceback, table.unpack(args))
-		emitEventErrorIfFailed(beforeAsyncSuccess, EventErrorPhase.beforeAsync, beforeState, tostring(beforeAsyncResult))
+		emitEventErrorIfFailed(
+			beforeAsyncSuccess,
+			EventErrorPhase.beforeAsync,
+			beforeState,
+			tostring(beforeAsyncResult)
+		)
 		local afterState: State? = beforeAsyncResult
 		if self._isDestroyed then
 			return
@@ -454,7 +459,7 @@ function StateQ._emitEventError(self: ClassType, errorInfo: EventError)
 		self.eventErrored:Fire(errorInfo)
 	else
 		-- Casting to any because error's generic typing is messed up with this style of calling
-		task.spawn(error, StateQ.formatEventError(errorInfo) ::any)
+		task.spawn(error, StateQ.formatEventError(errorInfo) :: any)
 	end
 end
 
