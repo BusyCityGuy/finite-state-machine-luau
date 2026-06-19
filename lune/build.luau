@@ -30,7 +30,7 @@
 				StateQ.zip
 --]]
 
-local Path = require("Utils/Path")
+local Path = require("./Utils/Path")
 local fs = require("@lune/fs")
 local process = require("@lune/process")
 
@@ -87,7 +87,7 @@ local build_targets = {
 for _, buildTarget in build_targets do
 	print(`\nBuilding {buildTarget.description} artifact...`)
 	print(buildTarget.command, table.concat(buildTarget.args, " "))
-	local proc = process.spawn(buildTarget.command, buildTarget.args)
+	local proc = process.exec(buildTarget.command, buildTarget.args)
 	print(proc.stdout)
 	assert(proc.ok, proc.stderr)
 end

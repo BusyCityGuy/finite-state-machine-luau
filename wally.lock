@@ -4,7 +4,7 @@ registry = "test"
 
 [[package]]
 name = "busycityguy/stateq"
-version = "0.0.0"
+version = "0.0.6"
 dependencies = [["t", "osyrisrblx/t@3.1.1"], ["Freeze", "duckarmor/freeze@0.1.4"], ["Jest", "jsdotlua/jest@3.6.1-rc.2"], ["JestGlobals", "jsdotlua/jest-globals@3.6.1-rc.2"]]
 
 [[package]]

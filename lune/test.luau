@@ -18,15 +18,15 @@ local serde = require("@lune/serde")
 local task = require("@lune/task")
 
 -- DEPENDENTS: [Jest]
-local DateTime = require("Context/DateTime")
-local Debug = require("Context/Debug")
-local Runtime = require("Utils/Runtime")
+local DateTime = require("./Context/DateTime")
+local Debug = require("./Context/Debug")
+local Runtime = require("./Utils/Runtime")
 
 -- DEPENDENTS: [test.luau, Jest]
-local ReducedInstance = require("Utils/ReducedInstance")
+local ReducedInstance = require("./Utils/ReducedInstance")
 
 -- DEPENDENTS: [test.luau]
-local Path = require("Utils/Path")
+local Path = require("./Utils/Path")
 
 type RojoProject = {
 	name: string,
@@ -55,7 +55,7 @@ local function buildProject(rojoProjectFilePath: string)
 	local rojoPath = Path.join(root, ".rokit", "bin", "rojo")
 
 	print(`Building project {rojoProjectFilePath} into {builtProjectFilePath} with Rojo...\n`)
-	local proc = process.spawn(rojoPath, { "build", rojoProjectFilePath, "--output", builtProjectFilePath })
+	local proc = process.exec(rojoPath, { "build", rojoProjectFilePath, "--output", builtProjectFilePath })
 	assert(proc.ok, `Failed to build project [{builtProjectFilePath}]: {proc.stderr}`)
 
 	print(`Deserializing {builtProjectFilePath}...`)
