@@ -1,7 +1,7 @@
 {
   "luau-lsp.require.mode": "relativeToFile",
   "luau-lsp.require.directoryAliases": {
-    "@lune/": "~/.lune/.typedefs/0.8.8/"
+    "@lune/": "~/.lune/.typedefs/0.10.4/"
   },
   "luau-lsp.ignoreGlobs": [
     "**/_Index/**",

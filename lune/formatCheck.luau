@@ -11,9 +11,9 @@
 		lune run formatCheck
 --]]
 
-local Path = require("Utils/Path")
+local Path = require("./Utils/Path")
 local process = require("@lune/process")
-local runShellScript = require("Utils/runShellScript")
+local runShellScript = require("./Utils/runShellScript")
 local stdio = require("@lune/stdio")
 local task = require("@lune/task")
 
