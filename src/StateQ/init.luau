@@ -35,7 +35,7 @@
 		by erroring if an Event is called in an invalid state (a state with no Transition defined for that Event).
 
 	# Included features
-		The FSM provides 5 signals that can be listened to during handling of an event.
+		The FSM provides 6 signals. Five fire during normal handling of an event; `eventErrored` fires when queued event processing fails.
 		These signals, transition callbacks, and state changes are processed in the following order:
 
 		1. Fire `beforeEvent` signal
@@ -53,6 +53,9 @@
 			* with arguments `eventName, afterState, beforeState`
 		8. Fire `finished` signal if next state from `beforeAsync()` was `nil`
 			* with argument `beforeState`
+
+		If queued event processing fails, fire `eventErrored` with an `EventError` table
+		(machineName, eventName, beforeState, afterState, phase, message, traceback).
 
 		Transitions can be asynchronous, which is supported by queuing each Event submitted via :handle() and processing them in First-In-First-Out (FIFO) order. The next Event starts processing immediately after the previous Event's handler fires `afterEvent`.
 
@@ -116,7 +119,6 @@
 -- If installed as a submodule, you'll need to edit your project.json file to set the path for this module inside of a Packages folder, and install dependencies there.
 local Packages = script.Parent
 
-local Logger = require(script.Modules.Logger)
 local Signal = require(script.Modules.Signal)
 local ThreadQueue = require(script.Modules.ThreadQueue)
 local t = require(Packages.t)
@@ -156,22 +158,45 @@ local Event = t.strictInterface({
 })
 
 -- EventHandlers fire signals and call transition callbacks as outlined in the header comment
-type EventHandler = (...any) -> ()
+type EventHandler = (enqueueTraceback: string, ...any) -> ()
 
-local DEFAULT_LOG_LEVEL: Logger.LogLevel = Logger.LogLevel.Info
+-- Which step of queued event processing failed.
+export type EventErrorPhase = "queue" | "validation" | "beforeAsync" | "afterAsync"
+
+-- Structured error payload fired by `eventErrored`.
+export type EventError = {
+	machineName: string,
+	eventName: EventName,
+	beforeState: State?,
+	afterState: State?,
+	phase: EventErrorPhase,
+	message: string,
+	traceback: string,
+}
 
 -- Runtime type check definitions are up here because it somehow messes up Luau typing if they're put right above the corresponding function.
-local newCheck =
-	t.strict(t.tuple(State, t.map(EventName, Event), t.optional(t.string), t.optional(t.valueOf(Logger.LogLevel))))
+local newCheck = t.strict(t.tuple(State, t.map(EventName, Event), t.optional(t.string), t.optional(t.boolean)))
 local createEventHandlersCheck = t.strictInterface({
 	[EventName] = Event,
 })
 local checkAfterState = t.strict(t.optional(State))
 local queueEventAsyncCheck = t.strict(t.tuple(EventName, Event))
 local handleCheck = t.strict(EventName)
+local setDebugEnabledCheck = t.strict(t.boolean)
+
+local function errorTraceback(message: string): string
+	return debug.traceback(message)
+end
+
+local EventErrorPhase = table.freeze({
+	queue = "queue" :: "queue",
+	validation = "validation" :: "validation",
+	beforeAsync = "beforeAsync" :: "beforeAsync",
+	afterAsync = "afterAsync" :: "afterAsync",
+})
 
 local StateQ = {}
-StateQ.Logger = Logger
+StateQ.EventErrorPhase = EventErrorPhase
 StateQ.__index = StateQ
 StateQ.__tostring = function(_self)
 	return "StateQ"
@@ -185,13 +210,15 @@ export type ClassType = typeof(setmetatable(
 		stateEntered: Signal.ClassType,
 		afterEvent: Signal.ClassType,
 		finished: Signal.ClassType,
+		eventErrored: Signal.ClassType,
 
 		-- Private properties
+		_name: string,
 		_currentState: State?,
 		_eventQueue: ThreadQueue.ClassType,
 		_handlersByEventName: { [EventName]: EventHandler },
 		_validEventNamesByState: { [State]: { EventName } },
-		_logger: Logger.ClassType,
+		_isDebugEnabled: boolean,
 		_isDestroyed: boolean,
 	},
 	StateQ
@@ -203,16 +230,11 @@ function StateQ.new(
 	initialState: State,
 	eventsByName: { [EventName]: Event },
 	name: string?,
-	logLevel: Logger.LogLevel?
+	isDebugEnabled: boolean?
 ): ClassType
-	newCheck(initialState, eventsByName, name, logLevel)
+	newCheck(initialState, eventsByName, name, isDebugEnabled)
 
 	machineNumber += 1
-	local defaultName = `Machine{machineNumber}`
-	name = name or `Machine{machineNumber}`
-
-	local logger = Logger.new(name or defaultName, logLevel or DEFAULT_LOG_LEVEL)
-	logger:addDefaultHandler()
 
 	local self = {
 		-- Public events
@@ -221,13 +243,15 @@ function StateQ.new(
 		stateEntered = Signal.new(),
 		afterEvent = Signal.new(),
 		finished = Signal.new(),
+		eventErrored = Signal.new(),
 
 		-- Private properties
+		_name = name or `Machine{machineNumber}`,
 		_currentState = initialState :: State?,
 		_eventQueue = ThreadQueue.new(),
 		_handlersByEventName = {} :: { [EventName]: EventHandler },
 		_validEventNamesByState = {} :: { [State]: { EventName } },
-		_logger = logger,
+		_isDebugEnabled = isDebugEnabled or false,
 		_isDestroyed = false,
 	}
 
@@ -239,12 +263,14 @@ function StateQ.new(
 end
 
 function StateQ._createEventHandlers(self: ClassType, eventsByName: { [EventName]: Event })
-	self:getLogger():wrap(createEventHandlersCheck, eventsByName)
+	createEventHandlersCheck(eventsByName)
 
 	for eventName, event in pairs(eventsByName) do
-		self._handlersByEventName[eventName] = function(...: any?)
-			local success, errorMessage = self:_queueEventAsync(eventName, event, ...)
-			self:getLogger():assert(success, `Failed to queue event {eventName}:\n\t{errorMessage}`)
+		self._handlersByEventName[eventName] = function(enqueueTraceback: string, ...: any?)
+			local errorInfo = self:_queueEventAsync(eventName, event, enqueueTraceback, ...)
+			if errorInfo then
+				self:_emitEventError(errorInfo)
+			end
 		end
 
 		for state, _ in pairs(event.from) do
@@ -254,41 +280,96 @@ function StateQ._createEventHandlers(self: ClassType, eventsByName: { [EventName
 	end
 end
 
-function StateQ._queueEventAsync(self: ClassType, eventName: EventName, event: Event, ...: any?)
-	self:getLogger():wrap(queueEventAsyncCheck, eventName, event)
+function StateQ._queueEventAsync(
+	self: ClassType,
+	eventName: EventName,
+	event: Event,
+	enqueueTraceback: string,
+	...: any?
+): EventError?
+	queueEventAsyncCheck(eventName, event)
 
 	local args = { ... }
+	local eventError: EventError? = nil
 
-	local success, errorMessage = self._eventQueue:submitAsync(function()
+	local function emitEventErrorIfFailed(
+		successCondition: any,
+		phase: EventErrorPhase,
+		beforeState: State?,
+		message: string,
+		afterState: State?
+	)
+		if successCondition then
+			return
+		end
+		eventError = self:_buildEventError(eventName, beforeState, phase, message, enqueueTraceback, afterState)
+		error(StateQ.formatEventError(eventError :: EventError), 0)
+	end
+
+	local submitAsyncSuccess, submitAsyncErrorMessage = self._eventQueue:submitAsync(function()
 		if self._isDestroyed then
 			return
 		end
 
-		assert(self._currentState, `Attempt to process event {eventName} after the state machine already finished`)
+		emitEventErrorIfFailed(
+			self._currentState,
+			EventErrorPhase.validation,
+			nil,
+			`Attempt to process event {eventName} after the state machine already finished`
+		)
 		local beforeState = self._currentState :: State
 
 		local transition = event.from[beforeState]
-		assert(transition, `Illegal event {eventName} called during state {beforeState}`)
+		emitEventErrorIfFailed(
+			transition,
+			EventErrorPhase.validation,
+			beforeState,
+			`Illegal event {eventName} called during state {beforeState}`
+		)
 
 		self.beforeEvent:Fire(eventName, beforeState)
-		local afterState = transition.beforeAsync(table.unpack(args))
+
+		local beforeAsyncSuccess, beforeAsyncResult = xpcall(transition.beforeAsync, errorTraceback, table.unpack(args))
+		emitEventErrorIfFailed(
+			beforeAsyncSuccess,
+			EventErrorPhase.beforeAsync,
+			beforeState,
+			tostring(beforeAsyncResult)
+		)
+		local afterState: State? = beforeAsyncResult
 		if self._isDestroyed then
 			return
 		end
 
-		self:getLogger():wrap(checkAfterState, afterState)
+		local checkAfterStateSuccess, checkAfterStateResult = pcall(checkAfterState, afterState)
+		emitEventErrorIfFailed(
+			checkAfterStateSuccess,
+			EventErrorPhase.validation,
+			beforeState,
+			tostring(checkAfterStateResult)
+		)
 
-		self:getLogger():debug(`Transitioning from {beforeState} to {afterState}`)
+		self:_debugPrint(`Transitioning from {beforeState} to {afterState}`)
 
 		if afterState ~= beforeState then
 			self.leavingState:Fire(beforeState, afterState)
 			self._currentState = afterState
 			self.stateEntered:Fire(afterState, beforeState)
-			self:getLogger():debug("Valid events:", self:getValidEvents())
+			self:_debugPrint("Valid events:", self:getValidEvents())
 		end
 
 		if transition.afterAsync then
-			transition.afterAsync(table.unpack(args))
+			local afterAsyncSuccess, afterAsyncErrorMessage = xpcall(function(): nil
+				transition.afterAsync(table.unpack(args))
+				return nil
+			end, errorTraceback)
+			emitEventErrorIfFailed(
+				afterAsyncSuccess,
+				EventErrorPhase.afterAsync,
+				beforeState,
+				tostring(afterAsyncErrorMessage),
+				self._currentState
+			)
 			if self._isDestroyed then
 				return
 			end
@@ -299,34 +380,98 @@ function StateQ._queueEventAsync(self: ClassType, eventName: EventName, event: E
 		local isFinished = not afterState
 
 		if isFinished then
-			self:getLogger():assert(
+			emitEventErrorIfFailed(
 				event.canBeFinal,
+				EventErrorPhase.validation,
+				beforeState,
 				`Transition did not return next state during a non-final event {eventName} with state {beforeState}`
 			)
 			-- State machine finished
-			self:getLogger():debug("Finished")
+			self:_debugPrint("Finished")
 			self.finished:Fire(beforeState)
 		end
 	end)
 
-	return success, errorMessage
+	if eventError then
+		return eventError
+	end
+
+	if submitAsyncSuccess == false then
+		return self:_buildEventError(
+			eventName,
+			self._currentState,
+			EventErrorPhase.queue,
+			submitAsyncErrorMessage or "Unknown queue error",
+			enqueueTraceback
+		)
+	end
+
+	return nil
 end
 
 -- VarArgs get passed to the transition callbacks
 function StateQ.handle(self: ClassType, eventName: EventName, ...: any?)
-	self:getLogger():wrap(handleCheck, eventName)
-	self:getLogger()
-		:assert(not self._isDestroyed, `Attempt to handle event {eventName} after the state machine was destroyed`)
+	handleCheck(eventName)
+	assert(not self._isDestroyed, `Attempt to handle event {eventName} after the state machine was destroyed`)
 
 	local handleEvent = self._handlersByEventName[eventName] :: EventHandler?
-	self:getLogger():assert(handleEvent, `Invalid event name passed to handle: {eventName}`)
+	assert(handleEvent, `Invalid event name passed to handle: {eventName}`)
 
-	self:getLogger():debug(`Handling {eventName}`)
-	coroutine.wrap(handleEvent :: EventHandler)(...)
+	self:_debugPrint(`Handling {eventName}`)
+
+	local enqueueTraceback = debug.traceback("Queued from:", 2)
+	coroutine.wrap(handleEvent :: EventHandler)(enqueueTraceback, ...)
 end
 
-function StateQ.getLogger(self: ClassType): Logger.ClassType
-	return self._logger
+function StateQ._buildEventError(
+	self: ClassType,
+	eventName: EventName,
+	beforeState: State?,
+	phase: EventErrorPhase,
+	message: string,
+	traceback: string,
+	afterState: State?
+): EventError
+	return {
+		machineName = self._name,
+		eventName = eventName,
+		beforeState = beforeState,
+		afterState = afterState,
+		phase = phase,
+		message = message,
+		traceback = traceback,
+	}
+end
+
+function StateQ.formatEventError(errorInfo: EventError): string
+	local beforeStateLabel = if errorInfo.beforeState then `state {errorInfo.beforeState}` else "state (none)"
+	local afterStateLabel = if errorInfo.afterState and errorInfo.afterState ~= errorInfo.beforeState
+		then `, now in {errorInfo.afterState}`
+		else ""
+
+	return `{errorInfo.machineName}: event {errorInfo.eventName} ({beforeStateLabel}{afterStateLabel}) failed during {errorInfo.phase}:\n\t{errorInfo.message}\n{errorInfo.traceback}`
+end
+
+-- Emits an error via the eventErrored signal that occurred while processing a queued event.
+-- If nothing is listening, re-raise loudly on a new thread so it isn't silently lost.
+function StateQ._emitEventError(self: ClassType, errorInfo: EventError)
+	if self.eventErrored:hasAnyConnection() then
+		self.eventErrored:Fire(errorInfo)
+	else
+		-- Casting to any because error's generic typing is messed up with this style of calling
+		task.spawn(error, StateQ.formatEventError(errorInfo) :: any)
+	end
+end
+
+function StateQ._debugPrint(self: ClassType, ...: any?)
+	if self._isDebugEnabled then
+		print(`{self._name}:`, ...)
+	end
+end
+
+function StateQ.setDebugEnabled(self: ClassType, enabled: boolean)
+	setDebugEnabledCheck(enabled)
+	self._isDebugEnabled = enabled
 end
 
 function StateQ.getState(self: ClassType)
@@ -344,6 +489,7 @@ function StateQ.destroy(self: ClassType)
 	self.stateEntered:DisconnectAll()
 	self.afterEvent:DisconnectAll()
 	self.finished:DisconnectAll()
+	self.eventErrored:DisconnectAll()
 end
 
 return StateQ
