@@ -4,6 +4,9 @@ on:
   release:
     types: [published]
 
+permissions:
+  contents: read
+
 jobs:
   get-version:
     name: Get version from release tag
@@ -16,7 +19,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4.1.7
+        uses: actions/checkout@v7.0.0
 
       - name: Output version and tag name
         id: output-version
@@ -42,10 +45,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4.1.7
+        uses: actions/checkout@v7.0.0
 
       - name: Install Rokit
-        uses: CompeyDev/setup-rokit@v0.1.2
+        uses: CompeyDev/setup-rokit@v0.2.1
 
       - name: Setup Lune
         run: lune setup
@@ -54,7 +57,7 @@ jobs:
         run: wally install
 
       - name: Cache installed items
-        uses: actions/cache@v4.0.2
+        uses: actions/cache@v5.0.5
         with:
           path: |
             ~/.rokit
@@ -81,12 +84,12 @@ jobs:
           private-key: ${{ secrets.RELEASE_PREPROCESSOR_PRIVATE_KEY }}
 
       - name: Checkout code
-        uses: actions/checkout@v4.1.7
+        uses: actions/checkout@v7.0.0
         with:
           token: ${{ steps.release-preprocessor-bot-token.outputs.token }}
 
       - name: Restore installed items
-        uses: actions/cache@v4.0.2
+        uses: actions/cache@v5.0.5
         with:
           path: |
             ~/.rokit
@@ -116,12 +119,12 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4.1.7
+        uses: actions/checkout@v7.0.0
         with:
           ref: ${{ needs.preprocess-release.outputs.commit-hash }}
 
       - name: Restore installed items
-        uses: actions/cache@v4.0.2
+        uses: actions/cache@v5.0.5
         with:
           path: |
             ~/.rokit
@@ -137,7 +140,7 @@ jobs:
         run: lune run build ${{ needs.get-version.outputs.version-with-dashes }}
 
       - name: Cache artifacts
-        uses: actions/cache@v4.0.2
+        uses: actions/cache@v5.0.5
         with:
           path: |
             build
@@ -152,12 +155,12 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4.1.7
+        uses: actions/checkout@v7.0.0
         with:
           ref: ${{ needs.preprocess-release.outputs.commit-hash }}
 
       - name: Restore installed items
-        uses: actions/cache@v4.0.2
+        uses: actions/cache@v5.0.5
         with:
           path: |
             ~/.rokit
@@ -167,7 +170,7 @@ jobs:
           key: tools-${{ hashFiles('rokit.toml') }}
 
       - name: Restore build artifacts
-        uses: actions/cache@v4.0.2
+        uses: actions/cache@v5.0.5
         with:
           path: |
             build
@@ -192,7 +195,7 @@ jobs:
 
     steps:
       - name: Restore build artifacts
-        uses: actions/cache@v4.0.2
+        uses: actions/cache@v5.0.5
         with:
           path: |
             build
