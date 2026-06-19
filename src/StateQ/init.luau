@@ -54,6 +54,9 @@
 		8. Fire `finished` signal if next state from `beforeAsync()` was `nil`
 			* with argument `beforeState`
 
+		If queued event processing fails, fire `eventErrored` with an `EventError` table
+		(machineName, eventName, beforeState, afterState, phase, message, traceback).
+
 		Transitions can be asynchronous, which is supported by queuing each Event submitted via :handle() and processing them in First-In-First-Out (FIFO) order. The next Event starts processing immediately after the previous Event's handler fires `afterEvent`.
 
 		The FSM can Finish if a Transition does not return a "next state" during an event marked as "canBeFinal".
@@ -155,7 +158,21 @@ local Event = t.strictInterface({
 })
 
 -- EventHandlers fire signals and call transition callbacks as outlined in the header comment
-type EventHandler = (...any) -> ()
+type EventHandler = (enqueueTraceback: string, ...any) -> ()
+
+-- Which step of queued event processing failed.
+export type EventErrorPhase = "queue" | "validation" | "beforeAsync" | "afterAsync"
+
+-- Structured error payload fired by `eventErrored`.
+export type EventError = {
+	machineName: string,
+	eventName: EventName,
+	beforeState: State?,
+	afterState: State?,
+	phase: EventErrorPhase,
+	message: string,
+	traceback: string,
+}
 
 -- Runtime type check definitions are up here because it somehow messes up Luau typing if they're put right above the corresponding function.
 local newCheck = t.strict(t.tuple(State, t.map(EventName, Event), t.optional(t.string), t.optional(t.boolean)))
@@ -167,7 +184,19 @@ local queueEventAsyncCheck = t.strict(t.tuple(EventName, Event))
 local handleCheck = t.strict(EventName)
 local setDebugEnabledCheck = t.strict(t.boolean)
 
+local function errorTraceback(message: string): string
+	return debug.traceback(message)
+end
+
+local EventErrorPhase = table.freeze({
+	queue = "queue" :: "queue",
+	validation = "validation" :: "validation",
+	beforeAsync = "beforeAsync" :: "beforeAsync",
+	afterAsync = "afterAsync" :: "afterAsync",
+})
+
 local StateQ = {}
+StateQ.EventErrorPhase = EventErrorPhase
 StateQ.__index = StateQ
 StateQ.__tostring = function(_self)
 	return "StateQ"
@@ -238,9 +267,9 @@ function StateQ._createEventHandlers(self: ClassType, eventsByName: { [EventName
 
 	for eventName, event in pairs(eventsByName) do
 		self._handlersByEventName[eventName] = function(enqueueTraceback: string, ...: any?)
-			local success, errorMessage = self:_queueEventAsync(eventName, event, ...)
-			if not success then
-				self:_emitEventError(`Failed to queue event {eventName}:\n\t{errorMessage}\n{enqueueTraceback}`)
+			local errorInfo = self:_queueEventAsync(eventName, event, enqueueTraceback, ...)
+			if errorInfo then
+				self:_emitEventError(errorInfo)
 			end
 		end
 
@@ -251,29 +280,69 @@ function StateQ._createEventHandlers(self: ClassType, eventsByName: { [EventName
 	end
 end
 
-function StateQ._queueEventAsync(self: ClassType, eventName: EventName, event: Event, ...: any?)
+function StateQ._queueEventAsync(
+	self: ClassType,
+	eventName: EventName,
+	event: Event,
+	enqueueTraceback: string,
+	...: any?
+): EventError?
 	queueEventAsyncCheck(eventName, event)
 
 	local args = { ... }
+	local eventError: EventError? = nil
 
-	local success, errorMessage = self._eventQueue:submitAsync(function()
+	local function emitEventErrorIfFailed(
+		successCondition: any,
+		phase: EventErrorPhase,
+		beforeState: State?,
+		message: string,
+		afterState: State?
+	)
+		if successCondition then
+			return
+		end
+		eventError = self:_buildEventError(eventName, beforeState, phase, message, enqueueTraceback, afterState)
+		error(StateQ.formatEventError(eventError :: EventError), 0)
+	end
+
+	local submitAsyncSuccess, submitAsyncErrorMessage = self._eventQueue:submitAsync(function()
 		if self._isDestroyed then
 			return
 		end
 
-		assert(self._currentState, `Attempt to process event {eventName} after the state machine already finished`)
+		emitEventErrorIfFailed(
+			self._currentState,
+			EventErrorPhase.validation,
+			nil,
+			`Attempt to process event {eventName} after the state machine already finished`
+		)
 		local beforeState = self._currentState :: State
 
 		local transition = event.from[beforeState]
-		assert(transition, `Illegal event {eventName} called during state {beforeState}`)
+		emitEventErrorIfFailed(
+			transition,
+			EventErrorPhase.validation,
+			beforeState,
+			`Illegal event {eventName} called during state {beforeState}`
+		)
 
 		self.beforeEvent:Fire(eventName, beforeState)
-		local afterState = transition.beforeAsync(table.unpack(args))
+
+		local beforeAsyncSuccess, beforeAsyncResult = xpcall(transition.beforeAsync, errorTraceback, table.unpack(args))
+		emitEventErrorIfFailed(beforeAsyncSuccess, EventErrorPhase.beforeAsync, beforeState, tostring(beforeAsyncResult))
+		local afterState: State? = beforeAsyncResult
 		if self._isDestroyed then
 			return
 		end
 
-		checkAfterState(afterState)
+		local checkAfterStateSuccess, checkAfterStateResult = pcall(checkAfterState, afterState)
+		emitEventErrorIfFailed(
+			checkAfterStateSuccess,
+			EventErrorPhase.validation,
+			beforeState,
+			tostring(checkAfterStateResult)
+		)
 
 		self:_debugPrint(`Transitioning from {beforeState} to {afterState}`)
 
@@ -285,7 +354,17 @@ function StateQ._queueEventAsync(self: ClassType, eventName: EventName, event: E
 		end
 
 		if transition.afterAsync then
-			transition.afterAsync(table.unpack(args))
+			local afterAsyncSuccess, afterAsyncErrorMessage = xpcall(function(): nil
+				transition.afterAsync(table.unpack(args))
+				return nil
+			end, errorTraceback)
+			emitEventErrorIfFailed(
+				afterAsyncSuccess,
+				EventErrorPhase.afterAsync,
+				beforeState,
+				tostring(afterAsyncErrorMessage),
+				self._currentState
+			)
 			if self._isDestroyed then
 				return
 			end
@@ -296,8 +375,10 @@ function StateQ._queueEventAsync(self: ClassType, eventName: EventName, event: E
 		local isFinished = not afterState
 
 		if isFinished then
-			assert(
+			emitEventErrorIfFailed(
 				event.canBeFinal,
+				EventErrorPhase.validation,
+				beforeState,
 				`Transition did not return next state during a non-final event {eventName} with state {beforeState}`
 			)
 			-- State machine finished
@@ -306,7 +387,21 @@ function StateQ._queueEventAsync(self: ClassType, eventName: EventName, event: E
 		end
 	end)
 
-	return success, errorMessage
+	if eventError then
+		return eventError
+	end
+
+	if submitAsyncSuccess == false then
+		return self:_buildEventError(
+			eventName,
+			self._currentState,
+			EventErrorPhase.queue,
+			submitAsyncErrorMessage or "Unknown queue error",
+			enqueueTraceback
+		)
+	end
+
+	return nil
 end
 
 -- VarArgs get passed to the transition callbacks
@@ -323,14 +418,43 @@ function StateQ.handle(self: ClassType, eventName: EventName, ...: any?)
 	coroutine.wrap(handleEvent :: EventHandler)(enqueueTraceback, ...)
 end
 
--- Emits an error via the eventErrored signal that occurred while processing a queued event. 
+function StateQ._buildEventError(
+	self: ClassType,
+	eventName: EventName,
+	beforeState: State?,
+	phase: EventErrorPhase,
+	message: string,
+	traceback: string,
+	afterState: State?
+): EventError
+	return {
+		machineName = self._name,
+		eventName = eventName,
+		beforeState = beforeState,
+		afterState = afterState,
+		phase = phase,
+		message = message,
+		traceback = traceback,
+	}
+end
+
+function StateQ.formatEventError(errorInfo: EventError): string
+	local beforeStateLabel = if errorInfo.beforeState then `state {errorInfo.beforeState}` else "state (none)"
+	local afterStateLabel = if errorInfo.afterState and errorInfo.afterState ~= errorInfo.beforeState
+		then `, now in {errorInfo.afterState}`
+		else ""
+
+	return `{errorInfo.machineName}: event {errorInfo.eventName} ({beforeStateLabel}{afterStateLabel}) failed during {errorInfo.phase}:\n\t{errorInfo.message}\n{errorInfo.traceback}`
+end
+
+-- Emits an error via the eventErrored signal that occurred while processing a queued event.
 -- If nothing is listening, re-raise loudly on a new thread so it isn't silently lost.
-function StateQ._emitEventError(self: ClassType, message: string)
-	local fullMessage = `{self._name}: {message}`
+function StateQ._emitEventError(self: ClassType, errorInfo: EventError)
 	if self.eventErrored:hasAnyConnection() then
-		self.eventErrored:Fire(fullMessage)
+		self.eventErrored:Fire(errorInfo)
 	else
-		task.spawn(error, fullMessage)
+		-- Casting to any because error's generic typing is messed up with this style of calling
+		task.spawn(error, StateQ.formatEventError(errorInfo) ::any)
 	end
 end
 

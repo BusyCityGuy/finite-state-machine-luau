@@ -143,12 +143,29 @@ These occur later, on the queue thread, while the event is actually being proces
 Listen for them when you want to log, recover, or assert in tests:
 
 ```luau
-machine.eventErrored:Connect(function(message)
-	warn(message)
+machine.eventErrored:Connect(function(errorInfo: StateQ.EventError)
+	warn(
+		errorInfo.eventName,
+		errorInfo.beforeState,
+		errorInfo.phase,
+		errorInfo.message
+	)
 end)
 ```
 
-The `message` includes the machine name, the error details, and a stack trace showing both where the failure occurred and where `:handle()` was called (`Queued from:`).
+`eventErrored` fires an `EventError` table:
+
+| Field | Description |
+|---|---|
+| `machineName` | Name passed to `StateQ.new`, or an auto-generated default |
+| `eventName` | The event being processed |
+| `beforeState` | State when processing started, if known (same as `beforeEvent`'s second argument) |
+| `afterState` | State at failure time when it differs from `beforeState` (e.g. `afterAsync` after a transition) |
+| `phase` | `"queue"`, `"validation"`, `"beforeAsync"`, or `"afterAsync"` |
+| `message` | The error message |
+| `traceback` | Failure stack and the `:handle()` call site (`Queued from:`) |
+
+Use `StateQ.formatEventError(errorInfo)` for a single log string. Compare `errorInfo.phase` against `StateQ.EventErrorPhase.beforeAsync`, etc.
 
 If nothing is connected to `eventErrored`, the error is re-raised on a new thread so it still appears in the output rather than being silently dropped.
 
@@ -159,7 +176,7 @@ The default re-raise is suppressed if at least one connection to `eventErrored` 
 So if you intentionally want to swallow processing errors, you could connect an empty function:
 
 ```luau
-machine.eventErrored:Connect(function(_message) end)
+machine.eventErrored:Connect(function(_errorInfo) end)
 ```
 
 
