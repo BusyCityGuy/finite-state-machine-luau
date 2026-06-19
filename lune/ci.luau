@@ -9,7 +9,7 @@
 		lune run ci
 --]]
 
-local Path = require("Utils/Path")
+local Path = require("./Utils/Path")
 local process = require("@lune/process")
 local stdio = require("@lune/stdio")
 local task = require("@lune/task")
@@ -30,7 +30,7 @@ local mainThread = coroutine.running()
 local function runLuneCommand(command: string)
 	local root = process.env.HOME or process.env.USERPROFILE
 	local lunePath = Path.join(root, ".rokit", "bin", "lune")
-	local proc = process.spawn(lunePath, { "run", command })
+	local proc = process.exec(lunePath, { "run", command })
 
 	print(proc.stdout)
 	if not proc.ok then
