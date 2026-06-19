@@ -17,7 +17,7 @@ by erroring if an Event is called in an invalid state (a state with no Transitio
 
 # Included features
 
-The FSM provides 5 signals that can be listened to during handling of an event.
+The FSM provides 6 signals. Five fire during normal handling of an event, and `eventErrored` fires when queued event processing fails.
 These signals, transition callbacks, and state changes are processed in the following order:
 
 ![SequenceDiagram](https://github.com/BusyCityGuy/finite-state-machine-luau/assets/55513323/9ace09e3-a16e-474b-83ca-aac91cd69492)
@@ -102,8 +102,66 @@ local light = StateQ.new(LightState.On, {
 
 light:handle(Event.SwitchOff) -- prints "Light is transitioning to Off"
 light:handle(Event.SwitchOn) -- prints "Light is transitioning to On", increases brightness over time, and then prints "Light is now On"
-light:handle(Event.SwitchOn) -- warns "Illegal event `SwitchOn` called during state `On`" with a stack trace
+light:handle(Event.SwitchOn) -- errors asynchronously via `eventErrored` (illegal event for the current state); see Error handling below
 ```
+
+# Error handling
+
+Every call to `:handle()` enqueues the event for processing on a background thread and returns immediately. Failures fall into two categories depending on when they occur.
+
+## Synchronous errors
+
+These throw on the thread that called `:handle()` before the event is enqueued:
+
+- `eventName` is not a string (type check)
+- The machine was `destroy()`ed
+- `eventName` is not defined on the machine
+
+In normal usage with known event names, these are programmer errors and should be left to throw during development.
+
+If you are passing dynamic or untrusted event names, you can catch them with `pcall`:
+
+```luau
+local success, errorMessage = pcall(function()
+	machine:handle(someEventName)
+end)
+if not success then
+	warn(errorMessage)
+end
+```
+
+## Asynchronous errors
+
+These occur later, on the queue thread, while the event is actually being processed. They cannot propagate back to the `:handle()` caller, so they are surfaced through the `eventErrored` signal instead:
+
+- A transition callback (`beforeAsync` or `afterAsync`) throws
+- The event is illegal for the machine's **current** state at processing time (even if `:handle()` already returned)
+- An event is processed after the machine has finished
+- A non-final event's transition returns `nil`
+- A transition returns a value that fails the state type check
+
+Listen for them when you want to log, recover, or assert in tests:
+
+```luau
+machine.eventErrored:Connect(function(message)
+	warn(message)
+end)
+```
+
+The `message` includes the machine name, the error details, and a stack trace showing both where the failure occurred and where `:handle()` was called (`Queued from:`).
+
+If nothing is connected to `eventErrored`, the error is re-raised on a new thread so it still appears in the output rather than being silently dropped.
+
+### Swallowing asynchronous errors
+
+The default re-raise is suppressed if at least one connection to `eventErrored` exists.
+
+So if you intentionally want to swallow processing errors, you could connect an empty function:
+
+```luau
+machine.eventErrored:Connect(function(_message) end)
+```
+
 
 # Detailed system flowchart
 
