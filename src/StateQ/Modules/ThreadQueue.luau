@@ -97,8 +97,9 @@ function ThreadQueue._popQueueAsync(self: ClassType)
 
 	local function execute()
 		-- This callback can yield. Note the callback is called synchronously on this thread.
-		-- The task.spawn is used to resume the calling thread with the pcall'd results of the callback.
-		task.spawn(entry.thread, pcall(entry.callback))
+		-- The task.spawn is used to resume the calling thread with the xpcall'd results of the callback.
+		-- xpcall with debug.traceback preserves the stack of where inside the callback it failed.
+		task.spawn(entry.thread, xpcall(entry.callback, debug.traceback))
 	end
 
 	-- If concurrency is enabled, we do not want to yield the queue while we wait for the callback to return
