@@ -82,6 +82,11 @@ local function implementRobloxMethods()
 		return self:IsA(className)
 	end)
 
+	-- DEPENDENTS: [Jest 3.10+]
+	roblox.implementMethod("CoreScriptSyncService", "GetScriptFilePath", function(_self, script: roblox.Instance)
+		return script:GetFullName()
+	end)
+
 	-- DEPENDENTS: [Jest]
 	roblox.implementProperty("RunService", "Heartbeat", function()
 		return {
@@ -144,6 +149,7 @@ local function loadScript(script: roblox.Instance): (((...any) -> ...any)?, stri
 			task = task,
 			DateTime = DateTime,
 			debug = Debug,
+			Instance = roblox.Instance,
 		}, { __index = roblox }) :: any,
 	})
 
