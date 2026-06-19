@@ -6,9 +6,9 @@ TYPES_FILE=globalTypes.d.luau
 SETTINGS_FILE=.luau-lsp.json
 
 if [ ! -f "$TYPES_FILE" ]; then
-    LUAU_LSP_VERSION=$(grep 'luau-lsp' rokit.toml | sed 's/.*@//')
+    LUAU_LSP_VERSION=$(grep '^luau-lsp' rokit.toml | sed -E 's/.*@([0-9.]+)".*/\1/')
     echo "Fetching global types for luau-lsp $LUAU_LSP_VERSION..."
-    curl -L "https://raw.githubusercontent.com/JohnnyMorganz/luau-lsp/$LUAU_LSP_VERSION/scripts/globalTypes.d.luau" > $TYPES_FILE
+    curl -fL "https://raw.githubusercontent.com/JohnnyMorganz/luau-lsp/$LUAU_LSP_VERSION/scripts/globalTypes.d.luau" > "$TYPES_FILE"
     echo "Wrote global types to $TYPES_FILE"
 fi
 
