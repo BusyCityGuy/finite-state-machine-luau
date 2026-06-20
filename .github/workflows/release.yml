@@ -64,7 +64,7 @@ jobs:
             ~/.lune
             Packages
             DevPackages
-          key: tools-${{ hashFiles('rokit.toml') }}
+          key: tools-${{ hashFiles('rokit.toml', 'wally.lock') }}
 
   preprocess-release:
     name: Preprocess release (update versions, copyright years)
@@ -96,7 +96,7 @@ jobs:
             ~/.lune
             Packages
             DevPackages
-          key: tools-${{ hashFiles('rokit.toml') }}
+          key: tools-${{ hashFiles('rokit.toml', 'wally.lock') }}
 
       - name: Add rokit tools to PATH
         run: echo "$HOME/.rokit/bin" >> $GITHUB_PATH
@@ -131,7 +131,7 @@ jobs:
             ~/.lune
             Packages
             DevPackages
-          key: tools-${{ hashFiles('rokit.toml') }}
+          key: tools-${{ hashFiles('rokit.toml', 'wally.lock') }}
 
       - name: Add rokit tools to PATH
         run: echo "$HOME/.rokit/bin" >> $GITHUB_PATH
@@ -167,7 +167,7 @@ jobs:
             ~/.lune
             Packages
             DevPackages
-          key: tools-${{ hashFiles('rokit.toml') }}
+          key: tools-${{ hashFiles('rokit.toml', 'wally.lock') }}
 
       - name: Restore build artifacts
         uses: actions/cache@v5.0.5
