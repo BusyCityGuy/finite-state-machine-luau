@@ -25,7 +25,7 @@
 
 --]]
 
--- Version: 0.0.7
+-- Version: 0.0.8
 
 --[[
 	# What's a finite state machine?

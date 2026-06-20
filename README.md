@@ -218,7 +218,7 @@ machine.eventErrored:Connect(function(_errorInfo) end)
 If your project is set up to build with Rojo, the preferred installation method is using [Wally](https://wally.run/). Add this to your `wally.toml` file:
 
 ```toml
-StateQ = "busycityguy/stateq@0.0.7"
+StateQ = "busycityguy/stateq@0.0.8"
 ```
 
 If you're not using Wally, you can add this repository as a submodule of your project by running the following command:
