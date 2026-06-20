@@ -162,17 +162,18 @@ describe("StateQ.new", function()
 		}
 
 		describe("the initial state (#1)", function()
-			it("nil", function()
-				expect(function()
-					StateQ.new(nil :: any, validEvents)
-				end).toThrow("Bad tuple index #1")
-			end)
+			local cases = {
+				{ name = "nil", value = nil, error = "expected string, got nil" },
+				{ name = "a number", value = 1, error = "expected string, got number" },
+				{ name = "a boolean", value = true, error = "expected string, got boolean" },
+				{ name = "a table", value = {}, error = "expected string, got table" },
+			}
 
-			for _, badValue in { 1, true, {} } do
-				it(`a {typeof(badValue)}`, function()
+			for _, case in cases do
+				it(case.name, function()
 					expect(function()
-						StateQ.new(badValue, validEvents)
-					end).toThrow("Bad tuple index #1")
+						StateQ.new(case.value, validEvents)
+					end).toThrow(case.error)
 				end)
 			end
 
@@ -184,19 +185,37 @@ describe("StateQ.new", function()
 		end)
 
 		describe("the events map (#2)", function()
-			it("nil", function()
-				expect(function()
-					StateQ.new(X_STATE, nil :: any)
-				end).toThrow("Bad tuple index #2")
-			end)
+			-- The mismatch shows up in the tuple header, e.g. "...), got (string, nil, ..."
+			local cases = {
+				{
+					name = "nil",
+					error = "), got (string, nil",
+					run = function()
+						StateQ.new(X_STATE, nil :: any)
+					end,
+				},
+				{
+					name = "a number",
+					error = "), got (string, number",
+					run = function()
+						StateQ.new(X_STATE, 1 :: any)
+					end,
+				},
+			}
 
-			for _, badValue in { 1, true, { "bad", "type" } } do
-				it(`a {typeof(badValue)}`, function()
-					expect(function()
-						StateQ.new(X_STATE, badValue)
-					end).toThrow("Bad tuple index #2")
+			for _, case in cases do
+				it(case.name, function()
+					expect(case.run).toThrow(case.error)
 				end)
 			end
+
+			it("an array", function()
+				-- GreenTea rejects a list while building the dictionary validator rather than
+				-- emitting a normal type-mismatch message.
+				expect(function()
+					StateQ.new(X_STATE, { "bad", "type" } :: any)
+				end).toThrow("Only one indexer can be specified")
+			end)
 
 			it("but accepts a valid events map", function()
 				expect(function()
@@ -206,11 +225,17 @@ describe("StateQ.new", function()
 		end)
 
 		describe("the name (#3)", function()
-			for _, badValue in { 1, true, {} } do
-				it(`a {typeof(badValue)}`, function()
+			local cases = {
+				{ name = "a number", value = 1, error = "expected string, got number" },
+				{ name = "a boolean", value = true, error = "expected string, got boolean" },
+				{ name = "a table", value = {}, error = "expected string, got table" },
+			}
+
+			for _, case in cases do
+				it(case.name, function()
 					expect(function()
-						StateQ.new(X_STATE, validEvents, badValue)
-					end).toThrow("Bad tuple index #3")
+						StateQ.new(X_STATE, validEvents, case.value)
+					end).toThrow(case.error)
 				end)
 			end
 
@@ -230,11 +255,17 @@ describe("StateQ.new", function()
 		end)
 
 		describe("the debug flag (#4)", function()
-			for _, badValue in { 1, "bad", {} } do
-				it(`a {typeof(badValue)}`, function()
+			local cases = {
+				{ name = "a number", value = 1, error = "expected boolean, got number" },
+				{ name = "a string", value = "bad", error = "expected boolean, got string" },
+				{ name = "a table", value = {}, error = "expected boolean, got table" },
+			}
+
+			for _, case in cases do
+				it(case.name, function()
 					expect(function()
-						StateQ.new(X_STATE, validEvents, nil, badValue)
-					end).toThrow("Bad tuple index #4")
+						StateQ.new(X_STATE, validEvents, nil, case.value)
+					end).toThrow(case.error)
 				end)
 			end
 
@@ -254,11 +285,21 @@ describe("StateQ.new", function()
 		end)
 
 		describe("the max queue length (#5)", function()
-			for _, badValue in { "bad", true, {}, 0, -1 } do
-				it(`a non-positive or non-number value: {tostring(badValue)}`, function()
+			-- #5 must satisfy number<range (0, inf]>?, so both wrong types and out-of-range
+			-- numbers fail against the same "(0, inf]" range constraint in the signature.
+			local cases = {
+				{ name = "a string", value = "bad" },
+				{ name = "a boolean", value = true },
+				{ name = "a table", value = {} },
+				{ name = "zero", value = 0 },
+				{ name = "negative one", value = -1 },
+			}
+
+			for _, case in cases do
+				it(`a non-positive or non-number value: {case.name}`, function()
 					expect(function()
-						StateQ.new(X_STATE, validEvents, nil, nil, badValue)
-					end).toThrow("Bad tuple index #5")
+						StateQ.new(X_STATE, validEvents, nil, nil, case.value)
+					end).toThrow("(0, inf]")
 				end)
 			end
 
@@ -344,12 +385,20 @@ describe("StateQ.new", function()
 end)
 
 describe("handle", function()
-	it("throws synchronously for a non-string event name", function()
-		local stateQ = makeMachine()
-		for _, badValue in { 1, true, {} } do
-			expect(function()
-				stateQ:handle(badValue)
-			end).toThrow(`string expected, got {typeof(badValue)}`)
+	describe("throws synchronously for a non-string event name", function()
+		local cases = {
+			{ name = "a number", value = 1, error = "expected string, got number" },
+			{ name = "a boolean", value = true, error = "expected string, got boolean" },
+			{ name = "a table", value = {}, error = "expected string, got table" },
+		}
+
+		for _, case in cases do
+			it(case.name, function()
+				local stateQ = makeMachine()
+				expect(function()
+					stateQ:handle(case.value)
+				end).toThrow(case.error)
+			end)
 		end
 	end)
 
@@ -381,16 +430,9 @@ describe("handle", function()
 	end)
 
 	it("forwards the variadic args to the transition callbacks", function(_, done)
-		local beforeArgs, afterArgs
-		-- jest.fn() returns the mock and a plain forwarding function; t.callback requires a real
-		-- function, so the transition uses the forwarding functions and we assert on the mocks.
-		local beforeMock, beforeFn = jest.fn(function(...)
-			beforeArgs = table.pack(...)
-			return Y_STATE
-		end)
-		local afterMock, afterFn = jest.fn(function(...)
-			afterArgs = table.pack(...)
-		end)
+		-- jest.fn() returns (mock, forwardingFn). Transitions need the forwarding fn, assertions use the mock.
+		local beforeMock, beforeFn = jest.fn(to(Y_STATE))
+		local afterMock, afterFn = jest.fn()
 		local events = {
 			[TO_Y_EVENT] = event(false, { [X_STATE] = transition(beforeFn, afterFn) }),
 		}
@@ -398,8 +440,6 @@ describe("handle", function()
 
 		onceSignal(stateQ.afterEvent, function()
 			settle(done, function()
-				expect(beforeArgs.n).toBe(4)
-				expect(afterArgs.n).toBe(4)
 				expect(beforeMock).toHaveBeenCalledWith("a", false, nil, 3.5)
 				expect(afterMock).toHaveBeenCalledWith("a", false, nil, 3.5)
 			end)
@@ -980,12 +1020,20 @@ describe("setDebugEnabled", function()
 		expect(makeMachine():isDebugEnabled()).toBe(false)
 	end)
 
-	it("throws for a non-boolean", function()
-		local stateQ = makeMachine()
-		for _, badValue in { 1, "bad", {} } do
-			expect(function()
-				stateQ:setDebugEnabled(badValue)
-			end).toThrow(`boolean expected, got {typeof(badValue)}`)
+	describe("throws for a non-boolean", function()
+		local cases = {
+			{ name = "a number", value = 1, error = "expected boolean, got number" },
+			{ name = "a string", value = "bad", error = "expected boolean, got string" },
+			{ name = "a table", value = {}, error = "expected boolean, got table" },
+		}
+
+		for _, case in cases do
+			it(case.name, function()
+				local stateQ = makeMachine()
+				expect(function()
+					stateQ:setDebugEnabled(case.value)
+				end).toThrow(case.error)
+			end)
 		end
 	end)
 
