@@ -126,41 +126,41 @@ local Packages = script.Parent
 
 local Signal = require(script.Modules.Signal)
 local ThreadQueue = require(script.Modules.ThreadQueue)
-local t = require(Packages.t)
+local gt = require(Packages.GreenTea)
 
--- These types are added for readability to disambiguate what the string is meant to represent in types
-type State = string
-local State = t.string
+local StateType = gt.build(gt.string())
+local EventNameType = gt.build(gt.string())
 
-type EventName = string
-local EventName = t.string
+type State = typeof(StateType:type())
+type EventName = typeof(EventNameType:type())
+
+-- Transition callbacks receive the varargs forwarded from `:handle(eventName, transitionArgs...)`.
+-- Runtime function checks can only verify "is a function", but spelling out the args/returns with
+-- GreenTea.fn gives module consumers precise type hints on Transition.beforeAsync/afterAsync.
+local function transitionArgs()
+	return gt.args(gt.vararg(gt.any({ allowNil = true })))
+end
 
 -- Transitions are sets of functions that handle Events based on the Machine's current state.
 -- First, `beforeAsync` returns the next State to transition to, or `nil` when the event is marked `canBeFinal`.
 -- Second, an optional `afterAsync` callback executes after the machine finishes transitioning states.
 -- Both callbacks can be asynchronous, and the signals described in the header comment will be delayed according to these functions yielding.
-export type Transition = {
-	beforeAsync: (...any) -> State?,
-	afterAsync: ((...any) -> ())?,
-}
-local Transition = t.strictInterface({
-	beforeAsync = t.callback,
-	afterAsync = t.optional(t.callback),
-})
+local TransitionType = gt.build(gt.struct({
+	beforeAsync = gt.fn(transitionArgs(), gt.returns(gt.optional(StateType:type()))),
+	afterAsync = gt.optional(gt.fn(transitionArgs(), gt.returns())),
+}))
+
+export type Transition = typeof(TransitionType:type())
 
 -- Events choose which Transition to trigger based on the Machine's current State.
 -- canBeFinal should only be true if the Transition is allowed to return nil to finish the machine.
 -- Otherwise, the Machine will error if the Transition returns nil.
-export type Event = {
-	canBeFinal: boolean,
-	from: {
-		[State]: Transition,
-	},
-}
-local Event = t.strictInterface({
-	canBeFinal = t.boolean,
-	from = t.map(State, Transition),
-})
+local EventType = gt.build(gt.struct({
+	canBeFinal = gt.boolean(),
+	from = gt.dictionary(StateType:type(), TransitionType:type()),
+}))
+
+export type Event = typeof(EventType:type())
 
 -- EventHandlers fire signals and call transition callbacks as outlined in the header comment
 type EventHandler = (enqueueTraceback: string, ...any) -> ()
@@ -179,17 +179,19 @@ export type EventError = {
 	traceback: string,
 }
 
--- Runtime type check definitions are up here because it somehow messes up Luau typing if they're put right above the corresponding function.
-local newCheck = t.strict(
-	t.tuple(State, t.map(EventName, Event), t.optional(t.string), t.optional(t.boolean), t.optional(t.numberPositive))
+local eventsByNameType = gt.build(gt.dictionary(EventNameType:type(), EventType:type()))
+local newArgsType = gt.build(
+	gt.tuple(
+		StateType:type(),
+		eventsByNameType:type(),
+		gt.optional(gt.string()),
+		gt.optional(gt.boolean()),
+		gt.optional(gt.number({ range = "(0, inf]" }))
+	)
 )
-local createEventHandlersCheck = t.strictInterface({
-	[EventName] = Event,
-})
-local checkAfterState = t.strict(t.optional(State))
-local queueEventAsyncCheck = t.strict(t.tuple(EventName, Event))
-local handleCheck = t.strict(EventName)
-local setDebugEnabledCheck = t.strict(t.boolean)
+local queueEventArgsType = gt.build(gt.tuple(EventNameType:type(), EventType:type()))
+local optionalStateType = gt.build(gt.optional(StateType:type()))
+local booleanType = gt.build(gt.boolean())
 
 local function errorTraceback(message: string): string
 	return debug.traceback(message)
@@ -240,7 +242,7 @@ function StateQ.new(
 	isDebugEnabled: boolean?,
 	maxQueueLength: number?
 ): ClassType
-	newCheck(initialState, eventsByName, name, isDebugEnabled, maxQueueLength)
+	newArgsType:assert(initialState, eventsByName, name, isDebugEnabled, maxQueueLength)
 
 	machineNumber += 1
 
@@ -271,9 +273,9 @@ function StateQ.new(
 end
 
 function StateQ._createEventHandlers(self: ClassType, eventsByName: { [EventName]: Event })
-	createEventHandlersCheck(eventsByName)
+	eventsByNameType:assert(eventsByName)
 
-	for eventName, event in pairs(eventsByName) do
+	for eventName, event in eventsByName do
 		self._handlersByEventName[eventName] = function(enqueueTraceback: string, ...: any?)
 			local errorInfo = self:_queueEventAsync(eventName, event, enqueueTraceback, ...)
 			if errorInfo then
@@ -281,7 +283,7 @@ function StateQ._createEventHandlers(self: ClassType, eventsByName: { [EventName
 			end
 		end
 
-		for state, _ in pairs(event.from) do
+		for state in event.from do
 			self._validEventNamesByState[state] = self._validEventNamesByState[state] or {}
 			table.insert(self._validEventNamesByState[state], eventName)
 		end
@@ -295,7 +297,7 @@ function StateQ._queueEventAsync(
 	enqueueTraceback: string,
 	...: any?
 ): EventError?
-	queueEventAsyncCheck(eventName, event)
+	queueEventArgsType:assert(eventName, event)
 
 	local args = { ... }
 	local eventError: EventError? = nil
@@ -349,7 +351,9 @@ function StateQ._queueEventAsync(
 			return
 		end
 
-		local checkAfterStateSuccess, checkAfterStateResult = pcall(checkAfterState, afterState)
+		local checkAfterStateSuccess, checkAfterStateResult = pcall(function()
+			optionalStateType:assert(afterState)
+		end)
 		emitEventErrorIfFailed(
 			checkAfterStateSuccess,
 			EventErrorPhase.validation,
@@ -419,7 +423,7 @@ end
 
 -- VarArgs get passed to the transition callbacks
 function StateQ.handle(self: ClassType, eventName: EventName, ...: any?)
-	handleCheck(eventName)
+	EventNameType:assert(eventName)
 	assert(not self._isDestroyed, `Attempt to handle event {eventName} after the state machine was destroyed`)
 
 	local handleEvent = self._handlersByEventName[eventName] :: EventHandler?
@@ -478,7 +482,7 @@ function StateQ._debugPrint(self: ClassType, ...: any?)
 end
 
 function StateQ.setDebugEnabled(self: ClassType, enabled: boolean)
-	setDebugEnabledCheck(enabled)
+	booleanType:assert(enabled)
 	self._isDebugEnabled = enabled
 end
 
