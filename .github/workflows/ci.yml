@@ -35,7 +35,7 @@ jobs:
             ~/.lune
             Packages
             DevPackages
-          key: tools-${{ hashFiles('rokit.toml') }}
+          key: tools-${{ hashFiles('rokit.toml', 'wally.lock') }}
 
   # Kampfkarren/selene is assumed to be included in the repository's rokit.toml file
   linting:
@@ -55,7 +55,7 @@ jobs:
             ~/.lune
             Packages
             DevPackages
-          key: tools-${{ hashFiles('rokit.toml') }}
+          key: tools-${{ hashFiles('rokit.toml', 'wally.lock') }}
 
       - name: Lint StateQ
         run: ./scripts/lint.sh src/StateQ
@@ -84,7 +84,7 @@ jobs:
             ~/.lune
             Packages
             DevPackages
-          key: tools-${{ hashFiles('rokit.toml') }}
+          key: tools-${{ hashFiles('rokit.toml', 'wally.lock') }}
 
       - name: Enforce StateQ code style with StyLua
         run: ./scripts/formatCheck.sh src/StateQ
@@ -113,7 +113,7 @@ jobs:
             ~/.lune
             Packages
             DevPackages
-          key: tools-${{ hashFiles('rokit.toml') }}
+          key: tools-${{ hashFiles('rokit.toml', 'wally.lock') }}
 
       - name: Analyze StateQ with luau-lsp
         run: |
@@ -146,7 +146,7 @@ jobs:
             ~/.lune
             Packages
             DevPackages
-          key: tools-${{ hashFiles('rokit.toml') }}
+          key: tools-${{ hashFiles('rokit.toml', 'wally.lock') }}
 
       - name: Test with Lune
         run: ./scripts/test.sh
