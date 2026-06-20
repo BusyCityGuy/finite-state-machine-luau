@@ -44,9 +44,11 @@
 			* with the VarArgs from `:handle(eventName, transitionArgs...)`
 		3. Fire `leavingState` signal
 			* with arguments `beforeState, afterState`
-		4. Update `_currentState` to next state
+			* skipped when the next state equals the current state
+		4. Update the current state when it changed
 		5. Fire `stateEntered` signal
 			* with arguments `afterState, beforeState`
+			* skipped when the next state equals the current state
 		6. Call `transition.afterAsync()` (if specified)
 			* with the VarArgs from `:handle(eventName, transitionArgs...)`
 		7. Fire `afterEvent` signal
@@ -59,8 +61,11 @@
 
 		Transitions can be asynchronous, which is supported by queuing each Event submitted via :handle() and processing them in First-In-First-Out (FIFO) order. The next Event starts processing immediately after the previous Event's handler fires `afterEvent`.
 
+		The optional `maxQueueLength` constructor parameter bounds how many Events may be queued at once. When the queue is full,
+		further :handle() calls fail with a `queue`-phase EventError. When omitted, the queue is unbounded.
+
 		The FSM can Finish if a Transition does not return a "next state" during an event marked as "canBeFinal".
-		In such a case, the FSM will fire a `finished` event and will error if any further Events are handled.
+		In such a case, the FSM will fire the `finished` signal and will error if any further Events are handled.
 		A `nil` state means the FSM has Finished.
 
 	# Example usage
@@ -110,7 +115,7 @@
 
 			light:handle(Event.SwitchOff) -- prints "Light is transitioning to Off"
 			light:handle(Event.SwitchOn) -- prints "Light is transitioning to On", increases brightness over time, and then prints "Light is now On"
-			light:handle(Event.SwitchOn) -- errors "Illegal event `SwitchOn` called during state `On`" with a stack trace
+			light:handle(Event.SwitchOn) -- errors asynchronously via `eventErrored` (illegal event for the current state)
 --]]
 
 -- This module should be in a folder called Packages that contains other module dependencies.
@@ -131,8 +136,8 @@ type EventName = string
 local EventName = t.string
 
 -- Transitions are sets of functions that handle Events based on the Machine's current state.
--- First, the `before` callback executes which returns the next State to transition to, or `nil` if the machine is meant to finish.
--- Second, an optional `after` callback can be defined that that executes after the machine finishes transitioning states.
+-- First, `beforeAsync` returns the next State to transition to, or `nil` when the event is marked `canBeFinal`.
+-- Second, an optional `afterAsync` callback executes after the machine finishes transitioning states.
 -- Both callbacks can be asynchronous, and the signals described in the header comment will be delayed according to these functions yielding.
 export type Transition = {
 	beforeAsync: (...any) -> State?,
@@ -175,7 +180,9 @@ export type EventError = {
 }
 
 -- Runtime type check definitions are up here because it somehow messes up Luau typing if they're put right above the corresponding function.
-local newCheck = t.strict(t.tuple(State, t.map(EventName, Event), t.optional(t.string), t.optional(t.boolean)))
+local newCheck = t.strict(
+	t.tuple(State, t.map(EventName, Event), t.optional(t.string), t.optional(t.boolean), t.optional(t.numberPositive))
+)
 local createEventHandlersCheck = t.strictInterface({
 	[EventName] = Event,
 })
@@ -230,9 +237,10 @@ function StateQ.new(
 	initialState: State,
 	eventsByName: { [EventName]: Event },
 	name: string?,
-	isDebugEnabled: boolean?
+	isDebugEnabled: boolean?,
+	maxQueueLength: number?
 ): ClassType
-	newCheck(initialState, eventsByName, name, isDebugEnabled)
+	newCheck(initialState, eventsByName, name, isDebugEnabled, maxQueueLength)
 
 	machineNumber += 1
 
@@ -248,7 +256,7 @@ function StateQ.new(
 		-- Private properties
 		_name = name or `Machine{machineNumber}`,
 		_currentState = initialState :: State?,
-		_eventQueue = ThreadQueue.new(),
+		_eventQueue = ThreadQueue.new(nil, maxQueueLength),
 		_handlersByEventName = {} :: { [EventName]: EventHandler },
 		_validEventNamesByState = {} :: { [State]: { EventName } },
 		_isDebugEnabled = isDebugEnabled or false,
@@ -480,6 +488,26 @@ end
 
 function StateQ.getValidEvents(self: ClassType)
 	return self._currentState and self._validEventNamesByState[self._currentState] or {}
+end
+
+function StateQ.getName(self: ClassType): string
+	return self._name
+end
+
+function StateQ.isDestroyed(self: ClassType): boolean
+	return self._isDestroyed
+end
+
+function StateQ.isFinished(self: ClassType): boolean
+	return self._currentState == nil
+end
+
+function StateQ.isDebugEnabled(self: ClassType): boolean
+	return self._isDebugEnabled
+end
+
+function StateQ.getMaxQueueLength(self: ClassType): number
+	return self._eventQueue:getMaxQueueLength()
 end
 
 function StateQ.destroy(self: ClassType)

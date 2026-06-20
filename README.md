@@ -4,10 +4,6 @@ An intuitive fully-typed Finite State Machine in [Luau](https://luau-lang.org/) 
 
 This project is licensed under the terms of the MIT license. See [LICENSE.md](https://github.com/busycityguy/finite-state-machine-luau/blob/main/LICENSE.md) for details.
 
-## This project is a work in progress
-
-Tests need to be written and the API may receive small changes while this project is being finalized for a first release.
-
 # What's a finite state machine?
 
 A Finite State Machine (FSM) provides a way to enforce specific logical flow among a set of States. Given an Event, the FSM responds by looking up the corresponding Transition for that Event in its current State. A Transition is a callback function that is invoked when an Event is given to the FSM, and it returns the next State for the FSM to move to.
@@ -28,9 +24,11 @@ These signals, transition callbacks, and state changes are processed in the foll
     - with the VarArgs from `:handle(eventName, transitionArgs...)`
 1. Fire `leavingState` signal
     - with arguments `beforeState, afterState`
-1. Update `_currentState` to next state
+    - skipped when the next state equals the current state
+1. Update the current state when it changed
 1. Fire `stateEntered` signal
     - with arguments `afterState, beforeState`
+    - skipped when the next state equals the current state
 1. Call `transition.afterAsync()` (if specified)
     - with the VarArgs from `:handle(eventName, transitionArgs...)`
 1. Fire `afterEvent` signal
@@ -40,8 +38,10 @@ These signals, transition callbacks, and state changes are processed in the foll
 
 Transitions can be asynchronous, which is supported by queuing each Event submitted via :handle() and processing them in First-In-First-Out (FIFO) order. The next Event starts processing immediately after the previous Event's handler fires `afterEvent`.
 
+The optional `maxQueueLength` constructor parameter bounds how many Events may be queued at once. When the queue is full, further :handle() calls fail with a `queue`-phase EventError. When omitted, the queue is unbounded.
+
 The FSM can Finish if a Transition does not return a "next state" during an event marked as "canBeFinal".
-In such a case, the FSM will fire a `finished` event and will error if any further Events are handled.
+In such a case, the FSM will fire the `finished` signal and will error if any further Events are handled.
 A `nil` state means the FSM has Finished.
 
 # Example usage
@@ -105,6 +105,32 @@ light:handle(Event.SwitchOn) -- prints "Light is transitioning to On", increases
 light:handle(Event.SwitchOn) -- errors asynchronously via `eventErrored` (illegal event for the current state); see Error handling below
 ```
 
+## Constructor
+
+You'll probably only ever need the first two constructor parameters, but there are a few more optionally available.
+
+`StateQ.new(initialState, eventsByName, name?, isDebugEnabled?, maxQueueLength?)`
+
+| Parameter          | Type                  | Description                                                                                                                                                                                |
+| ------------------ | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `initialState`     | `string`              | The state the machine starts in.                                                                                                                                                           |
+| `eventsByName`     | `{ [string]: Event }` | The events the machine can handle and their transitions.                                                                                                                                   |
+| `name`             | `string?`             | A name used in `eventErrored` payloads and debug output. Defaults to an auto-generated `Machine{n}`.                                                                                       |
+| `isDebugEnabled`   | `boolean?`            | When `true`, the machine prints debug output. Defaults to `false`.                                                                                                                         |
+| `maxQueueLength`   | `number?`             | A positive number bounding how many events may be queued at once. When omitted, the queue is unbounded. Handling an event while the queue is full fails with a `queue`-phase `EventError`. |
+
+## Accessors
+
+| Method                | Returns      | Description                                                 |
+|-----------------------|--------------|-------------------------------------------------------------|
+| `getState()`          | `string?`    | The current state, or `nil` if the machine has finished.    |
+| `getValidEvents()`    | `{ string }` | The event names that are valid in the current state.        |
+| `getName()`           | `string`     | The machine's name.                                         |
+| `getMaxQueueLength()` | `number`     | The configured queue capacity (`math.huge` when unbounded). |
+| `isFinished()`        | `boolean`    | Whether the machine has finished (its state is `nil`).      |
+| `isDestroyed()`       | `boolean`    | Whether `destroy()` has been called.                        |
+| `isDebugEnabled()`    | `boolean`    | Whether debug output is enabled.                            |
+
 # Error handling
 
 Every call to `:handle()` enqueues the event for processing on a background thread and returns immediately. Failures fall into two categories depending on when they occur.
@@ -139,6 +165,7 @@ These occur later, on the queue thread, while the event is actually being proces
 - An event is processed after the machine has finished
 - A non-final event's transition returns `nil`
 - A transition returns a value that fails the state type check
+- The event queue is at capacity (`maxQueueLength` exceeded)
 
 Listen for them when you want to log, recover, or assert in tests:
 
@@ -190,8 +217,8 @@ machine.eventErrored:Connect(function(_errorInfo) end)
 
 If your project is set up to build with Rojo, the preferred installation method is using [Wally](https://wally.run/). Add this to your `wally.toml` file:
 
-```bash
-> StateQ = "busycityguy/stateq@0.0.7"
+```toml
+StateQ = "busycityguy/stateq@0.0.7"
 ```
 
 If you're not using Wally, you can add this repository as a submodule of your project by running the following command:

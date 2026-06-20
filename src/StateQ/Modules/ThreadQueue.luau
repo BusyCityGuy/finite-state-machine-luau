@@ -43,7 +43,7 @@ function ThreadQueue.new(timeBetween: number?, maxQueueLength: number?, enableCo
 end
 
 function ThreadQueue.submitAsync(self: ClassType, callback: Callback): (boolean, string?)
-	if #self._queue > self._maxQueueLength then
+	if #self._queue >= self._maxQueueLength then
 		return false, string.format("Queue is at capacity (%i)", self._maxQueueLength)
 	end
 
@@ -61,6 +61,10 @@ end
 
 function ThreadQueue.getLength(self: ClassType): number
 	return #self._queue
+end
+
+function ThreadQueue.getMaxQueueLength(self: ClassType): number
+	return self._maxQueueLength
 end
 
 function ThreadQueue.skipToLastEnqueued(self: ClassType)
