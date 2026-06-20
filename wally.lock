@@ -5,7 +5,12 @@ registry = "test"
 [[package]]
 name = "busycityguy/stateq"
 version = "0.0.7"
-dependencies = [["t", "osyrisrblx/t@3.1.1"], ["Jest", "jsdotlua/jest@3.10.0"], ["JestGlobals", "jsdotlua/jest-globals@3.10.0"]]
+dependencies = [["GreenTea", "corecii/greentea@0.4.11"], ["Jest", "jsdotlua/jest@3.10.0"], ["JestGlobals", "jsdotlua/jest-globals@3.10.0"]]
+
+[[package]]
+name = "corecii/greentea"
+version = "0.4.11"
+dependencies = []
 
 [[package]]
 name = "jsdotlua/boolean"
@@ -246,8 +251,3 @@ dependencies = [["luau-polyfill", "jsdotlua/luau-polyfill@1.2.7"], ["promise", "
 name = "jsdotlua/timers"
 version = "1.2.7"
 dependencies = [["collections", "jsdotlua/collections@1.2.7"]]
-
-[[package]]
-name = "osyrisrblx/t"
-version = "3.1.1"
-dependencies = []

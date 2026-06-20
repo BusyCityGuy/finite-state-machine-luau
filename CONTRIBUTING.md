@@ -45,14 +45,14 @@ Additionally, if you're using VS Code it's recommended to install the following 
 
 The following tools are installed by Rokit:
 
-| Tool                                        | Description                                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Tool                                        | Description                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Rojo** for building                       | This project uses [Rojo](https://rojo.space/) to build from source files to a Roblox binary. You can either use the command line version installed by Rokit (recommended), or [install the VS Code extension](https://marketplace.visualstudio.com/items?itemName=evaera.vscode-rojo) for a handy user interface for building and serving the project. See [Building the Project](#build-the-project) for details on using Rojo in this project. |
-| **Selene** for linting                      | This project also uses [selene](https://kampfkarren.github.io/selene/roblox.html) for [linting](https://owasp.org/www-project-devsecops-guideline/latest/01b-Linting-Code). You can either use the command line version installed by Rokit, or [install the VS Code extension](https://marketplace.visualstudio.com/items?itemName=Kampfkarren.selene-vscode) to have it constantly running in the background.                                  |
-| **StyLua** for formatting                   | This project's Luau code base is formatted with [StyLua](https://github.com/JohnnyMorganz/StyLua). You can either use the command line version installed by Rokit, or [install the VS Code extension](https://marketplace.visualstudio.com/items?itemName=JohnnyMorganz.stylua)                                                                                                                                                                 |
+| **Selene** for linting                      | This project also uses [selene](https://kampfkarren.github.io/selene/roblox.html) for [linting](https://owasp.org/www-project-devsecops-guideline/latest/01b-Linting-Code). You can either use the command line version installed by Rokit, or [install the VS Code extension](https://marketplace.visualstudio.com/items?itemName=Kampfkarren.selene-vscode) to have it constantly running in the background.                                   |
+| **StyLua** for formatting                   | This project's Luau code base is formatted with [StyLua](https://github.com/JohnnyMorganz/StyLua). You can either use the command line version installed by Rokit, or [install the VS Code extension](https://marketplace.visualstudio.com/items?itemName=JohnnyMorganz.stylua)                                                                                                                                                                  |
 | **Luau LSP** for analysis & language server | This project uses [Luau Language Server](https://github.com/JohnnyMorganz/luau-lsp) to run analysis on luau code as a ci step. While the tool is also a standalone language server, the recommended flow is to also [install the VS Code extension](https://marketplace.visualstudio.com/items?itemName=JohnnyMorganz.luau-lsp) to have it constantly running in the background.                                                                 |
-| **Wally** for package management            | This project uses [Wally](https://wally.run/) to fetch open source dependency packages. See [Installing Packages](#install-packages) for instructions on using this command line tool.                                                                                                                                                                                                                                                          |
-| **Lune** for running tests from cli         | This project uses [Lune](https://lune-org.github.io/docs) to run tests from the command line. See [Run tests](#run-tests) for instructions on using this command line tool.                                                                                                                                                                                                                                                                     |
+| **Wally** for package management            | This project uses [Wally](https://wally.run/) to fetch open source dependency packages. See [Installing Packages](#install-packages) for instructions on using this command line tool.                                                                                                                                                                                                                                                           |
+| **Lune** for running tests from cli         | This project uses [Lune](https://lune-org.github.io/docs) to run tests from the command line. See [Run tests](#run-tests) for instructions on using this command line tool.                                                                                                                                                                                                                                                                      |
 
 ## Install packages
 
@@ -68,16 +68,16 @@ This will create `Packages` and `DevPackages` folders in the top level of the di
 
 The following package is installed as a production dependency:
 
-| Package                         | Description                                                                                                                                                                                                                                                                     |
-| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **t** for runtime type checking | This project uses [t](https://github.com/osyrisrblx/t) to check parameter types at runtime. This helps quickly catch incorrect usage errors by providing specific error messages about incorrect parameter types instead of cascading into a potentially confusing error later. |
+| Package                                | Description                                                                                                                                                                                                                                                                                |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **GreenTea** for runtime type checking | This project uses [GreenTea](https://github.com/Corecii/GreenTea) to check parameter types at runtime. This helps quickly catch incorrect usage errors by providing specific error messages about incorrect parameter types instead of cascading into a potentially confusing error later. |
 
 The following packages are installed as dev dependencies:
 
-| Package                        | Description                                                                                                                                                                                                                                |
-| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Jest** for testing           | This project uses [Jest](https://jsdotlua.github.io/jest-lua/) to run tests on the state machine project to ensure accuracy and catch bugs during development. See [Run tests](#run-tests) for instructions on how to run these tests.     |
-| **JestGlobals** for test setup | Test files import Jest globals such as `describe`, `it`, and `expect` from this companion package.                                                                                                                                         |
+| Package                                | Description                                                                                                                                                                                                                            |
+| -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Jest** for testing                   | This project uses [Jest](https://jsdotlua.github.io/jest-lua/) to run tests on the state machine project to ensure accuracy and catch bugs during development. See [Run tests](#run-tests) for instructions on how to run these tests. |
+| **JestGlobals** for test setup         | Test files import Jest globals such as `describe`, `it`, and `expect` from this companion package.                                                                                                                                     |
 
 ## Set up Lune for your editor
 
@@ -89,25 +89,24 @@ Run the command:
 > lune setup
 ```
 
-Then, modify your editor settings. For VS Code, open [`settings.json`](./.vscode/settings.json) and verify it contains the following:
+This installs Lune's type definitions under `~/.lune/.typedefs/<version>/`. This repo's [`.luaurc`](./.luaurc) already maps the `@lune/` alias to that folder, so requires like `require("@lune/process")` resolve once the definitions are installed. If your installed Lune version differs from the one pinned in [`rokit.toml`](./rokit.toml), update the version in [`.luaurc`](./.luaurc) to match.
+
+Next, point the Luau language server at the project's DataModel so Roblox-style requires (e.g. `require(script.Modules.Signal)`) resolve. For VS Code, copy [`settings.json.example`](./.vscode/settings.json.example) to `.vscode/settings.json` (which is gitignored). The key setting is:
 
 ```json
-"luau-lsp.require.mode": "relativeToFile",
-"luau-lsp.require.directoryAliases": {
- "@lune/": "~/.lune/.typedefs/x.y.z/"
-}
+"luau-lsp.sourcemap.rojoProjectFile": "test.project.json"
 ```
 
-An example [`settings.json`](./.vscode/settings.json) file is provided (see [`settings.json.example`](./.vscode/settings.json.example)), which also contains setup for the `luau-lsp` plugin to use [`test.project.json`](./test.project.json).
+which makes the extension generate a sourcemap from [`test.project.json`](./test.project.json) and watch it for changes.
 
 ## Build the project
 
 Rojo builds from json files that map files on your file system to locations in the roblox data model. This project includes two project.json files:
 
-| File                                             | Purpose                                                                                                                                                                                                                                                 |
-| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| File                                             | Purpose                                                                                                                                                                                                                                                   |
+| ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [`test.project.json`](./test.project.json)       | Useful for developing this project, because it defines an entire place file that can be opened, synced, and tested. This is the one you should build and serve with Rojo during development of this project.                                              |
-| [`rbxm.project.json`](./rbxm.project.json)       | The distributable rbxm build in the form of a ModuleScript and its children inside a Packages folder containing dependencies. This is built and made available on each Release as a downloadable artifact.                                              |
+| [`rbxm.project.json`](./rbxm.project.json)       | The distributable rbxm build in the form of a ModuleScript and its children inside a Packages folder containing dependencies. This is built and made available on each Release as a downloadable artifact.                                                |
 | [`default.project.json`](./default.project.json) | The standalone module without dependencies included. This defines the structure when a consumer links this project into their `project.json` file as a submodule, requiring the consumer to install dependencies and place this into the Packages folder. |
 
 If you plan to [run tests](#run-tests) from CLI (recommended), the test runner script automatically builds before running tests. You don't need to build it yourself.
@@ -174,7 +173,7 @@ Jest depends on the `debug.loadmodule` function, which is an internal Roblox API
 
 If you're running tests in Lune from the CLI, you don't need to worry about this because the test runner contains a custom implementation of `debug.loadmodule`.
 
-However, running tests in Roblox Studio requires flipping the `FFlagEnableLoadModule` flag to get access to this function. (Track the issue [here](https://github.com/jsdotlua/jest-lua/issues/3))
+However, running tests in Roblox Studio requires flipping the `FFlagEnableLoadModule` flag to get access to this function. (Track the issue at [jest-lua issue #3](https://github.com/jsdotlua/jest-lua/issues/3))
 
 The instructions to flip this flag differ on Mac vs Windows.
 
@@ -186,9 +185,9 @@ You need to set the `FFlagEnableLoadModule` value to `true`. Be sure to restart 
 
 ### Run tests
 
-| Method            | Instructions                                                                                                                                                                             |
-| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| CLI (recommended) | `lune run test`                                                                                                                                                                          |
+| Method            | Instructions                                                                                                                                                                              |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| CLI (recommended) | `lune run test`                                                                                                                                                                           |
 | Roblox Studio     | Open the test place file `StateQ-Test.rbxl` [built in the above step](#build-the-project) in Roblox Studio and run the place (server only). The output widget will show the test results. |
 
 ## Continuous integration (CI)
