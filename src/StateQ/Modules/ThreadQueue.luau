@@ -63,6 +63,10 @@ function ThreadQueue.getLength(self: ClassType): number
 	return #self._queue
 end
 
+function ThreadQueue.getMaxQueueLength(self: ClassType): number
+	return self._maxQueueLength
+end
+
 function ThreadQueue.skipToLastEnqueued(self: ClassType)
 	-- This method will not skip currently executing requests, but will remove
 	-- all pending requests from the queue aside from the most recently enqueued

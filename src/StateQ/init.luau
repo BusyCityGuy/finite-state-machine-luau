@@ -59,6 +59,9 @@
 
 		Transitions can be asynchronous, which is supported by queuing each Event submitted via :handle() and processing them in First-In-First-Out (FIFO) order. The next Event starts processing immediately after the previous Event's handler fires `afterEvent`.
 
+		The optional `maxQueueLength` constructor parameter bounds how many Events may be queued at once. When the queue is full,
+		further :handle() calls fail with a `queue`-phase EventError. When omitted, the queue is unbounded.
+
 		The FSM can Finish if a Transition does not return a "next state" during an event marked as "canBeFinal".
 		In such a case, the FSM will fire a `finished` event and will error if any further Events are handled.
 		A `nil` state means the FSM has Finished.
@@ -175,7 +178,9 @@ export type EventError = {
 }
 
 -- Runtime type check definitions are up here because it somehow messes up Luau typing if they're put right above the corresponding function.
-local newCheck = t.strict(t.tuple(State, t.map(EventName, Event), t.optional(t.string), t.optional(t.boolean)))
+local newCheck = t.strict(
+	t.tuple(State, t.map(EventName, Event), t.optional(t.string), t.optional(t.boolean), t.optional(t.numberPositive))
+)
 local createEventHandlersCheck = t.strictInterface({
 	[EventName] = Event,
 })
@@ -230,9 +235,10 @@ function StateQ.new(
 	initialState: State,
 	eventsByName: { [EventName]: Event },
 	name: string?,
-	isDebugEnabled: boolean?
+	isDebugEnabled: boolean?,
+	maxQueueLength: number?
 ): ClassType
-	newCheck(initialState, eventsByName, name, isDebugEnabled)
+	newCheck(initialState, eventsByName, name, isDebugEnabled, maxQueueLength)
 
 	machineNumber += 1
 
@@ -248,7 +254,7 @@ function StateQ.new(
 		-- Private properties
 		_name = name or `Machine{machineNumber}`,
 		_currentState = initialState :: State?,
-		_eventQueue = ThreadQueue.new(),
+		_eventQueue = ThreadQueue.new(nil, maxQueueLength),
 		_handlersByEventName = {} :: { [EventName]: EventHandler },
 		_validEventNamesByState = {} :: { [State]: { EventName } },
 		_isDebugEnabled = isDebugEnabled or false,
