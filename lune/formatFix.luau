@@ -11,13 +11,13 @@
 		lune run formatFix
 --]]
 
-local Path = require("Utils/Path")
+local Path = require("./Utils/Path")
 local process = require("@lune/process")
 local stdio = require("@lune/stdio")
 local task = require("@lune/task")
 
 local FORMAT_PATHS = {
-	Path.join("src", "StateMachine"),
+	Path.join("src", "StateQ"),
 	Path.join("src", "TestService"),
 	"lune",
 }
@@ -31,7 +31,7 @@ local mainThread = coroutine.running()
 local function fixFormatForPath(path: string)
 	local root = process.env.HOME or process.env.USERPROFILE
 	local styluaPath = Path.join(root, ".rokit", "bin", "stylua")
-	local proc = process.spawn(styluaPath, { path })
+	local proc = process.exec(styluaPath, { path })
 
 	print(proc.stdout)
 	if not proc.ok then

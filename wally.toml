@@ -1,16 +1,25 @@
 [package]
-name = "busycityguy/finite-state-machine-luau"
-description = "A feature rich and fully typed implementation of a Finite State Machine in Luau, developed for use in Roblox experiences"
-version = "0.1.0"
+name = "busycityguy/stateq"
+description = "An intuitive fully-typed Finite State Machine in Luau that supports async transitions by queueing events"
+version = "0.0.7"
 license = "MIT"
 authors = ["BusyCityGuy"]
 realm = "shared"
 registry = "https://github.com/UpliftGames/wally-index"
+exclude = ["*"]
+include = [
+    "src",
+    "src/StateQ",
+    "src/StateQ/**",
+    "default.project.json",
+    "wally.toml",
+    "README.md",
+    "LICENSE.md",
+]
 
 [dependencies]
 t = "corecii/greentea-t-standalone@0.4.7"
 
 [dev-dependencies]
-Freeze = "duckarmor/freeze@0.1.4"
-Jest = "jsdotlua/jest@3.6.1-rc.2"
-JestGlobals = "jsdotlua/jest-globals@3.6.1-rc.2"
+Jest = "jsdotlua/jest@3.10.0"
+JestGlobals = "jsdotlua/jest-globals@3.10.0"

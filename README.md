@@ -1,12 +1,8 @@
-# Finite State Machine (FSM) in Luau
+# StateQ: A Finite State Machine (FSM) in Luau
 
-A feature rich and fully typed implementation of a Finite State Machine in [Luau](https://luau-lang.org/), developed for use in Roblox experiences.
+An intuitive fully-typed Finite State Machine in [Luau](https://luau-lang.org/) that supports async transitions by queueing events, developed for use in Roblox experiences.
 
 This project is licensed under the terms of the MIT license. See [LICENSE.md](https://github.com/busycityguy/finite-state-machine-luau/blob/main/LICENSE.md) for details.
-
-## This project is a work in progress
-
-Tests need to be written and the API may receive small changes while this project is being finalized for a first release.
 
 # What's a finite state machine?
 
@@ -17,31 +13,35 @@ by erroring if an Event is called in an invalid state (a state with no Transitio
 
 # Included features
 
-The FSM provides 5 signals that can be listened to during handling of an event.
+The FSM provides 6 signals. Five fire during normal handling of an event, and `eventErrored` fires when queued event processing fails.
 These signals, transition callbacks, and state changes are processed in the following order:
 
 ![SequenceDiagram](https://github.com/BusyCityGuy/finite-state-machine-luau/assets/55513323/9ace09e3-a16e-474b-83ca-aac91cd69492)
 
 1. Fire `beforeEvent` signal
-   - with arguments `eventName`, `beforeState`
+    - with arguments `eventName`, `beforeState`
 1. Call `transition.beforeAsync()` (required, returns next state)
-   - with the VarArgs from `:handle(eventName, transitionArgs...)`
+    - with the VarArgs from `:handle(eventName, transitionArgs...)`
 1. Fire `leavingState` signal
-   - with arguments `beforeState, afterState`
-1. Update `_currentState` to next state
+    - with arguments `beforeState, afterState`
+    - skipped when the next state equals the current state
+1. Update the current state when it changed
 1. Fire `stateEntered` signal
-   - with arguments `afterState, beforeState`
+    - with arguments `afterState, beforeState`
+    - skipped when the next state equals the current state
 1. Call `transition.afterAsync()` (if specified)
-   - with the VarArgs from `:handle(eventName, transitionArgs...)`
+    - with the VarArgs from `:handle(eventName, transitionArgs...)`
 1. Fire `afterEvent` signal
-   - with arguments `eventName, afterState, beforeState`
+    - with arguments `eventName, afterState, beforeState`
 1. Fire `finished` signal if next state from `beforeAsync()` was `nil`
-   - with argument `beforeState`
+    - with argument `beforeState`
 
 Transitions can be asynchronous, which is supported by queuing each Event submitted via :handle() and processing them in First-In-First-Out (FIFO) order. The next Event starts processing immediately after the previous Event's handler fires `afterEvent`.
 
+The optional `maxQueueLength` constructor parameter bounds how many Events may be queued at once. When the queue is full, further :handle() calls fail with a `queue`-phase EventError. When omitted, the queue is unbounded.
+
 The FSM can Finish if a Transition does not return a "next state" during an event marked as "canBeFinal".
-In such a case, the FSM will fire a `finished` event and will error if any further Events are handled.
+In such a case, the FSM will fire the `finished` signal and will error if any further Events are handled.
 A `nil` state means the FSM has Finished.
 
 # Example usage
@@ -51,9 +51,13 @@ A simple state machine diagram for a light switch may look like this, where
 - States are represented as rectangles, and squares indicate the State can be Final
 - Events are represented as capsules
 
-![Screen Shot 2023-12-14 at 18 04 33](https://github.com/BusyCityGuy/finite-state-machine-luau/assets/55513323/3d5b2118-91ea-4427-ac2d-688fb0094d1f)
+![ExampleUsage](https://github.com/BusyCityGuy/finite-state-machine-luau/assets/55513323/3d5b2118-91ea-4427-ac2d-688fb0094d1f)
 
 ```luau
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local StateQ = require(ReplicatedStorage.Packages.StateQ)
+
 local LightState = {
 	On = "On",
 	Off = "Off",
@@ -64,7 +68,7 @@ local Event = {
 	SwitchOff = "SwitchOff",
 }
 
-local light = StateMachine.new(LightState.On, {
+local light = StateQ.new(LightState.On, {
 	[Event.SwitchOn] = {
 		canBeFinal = true,
 		from = {
@@ -98,8 +102,110 @@ local light = StateMachine.new(LightState.On, {
 
 light:handle(Event.SwitchOff) -- prints "Light is transitioning to Off"
 light:handle(Event.SwitchOn) -- prints "Light is transitioning to On", increases brightness over time, and then prints "Light is now On"
-light:handle(Event.SwitchOn) -- warns "Illegal event `SwitchOn` called during state `On`" with a stack trace
+light:handle(Event.SwitchOn) -- errors asynchronously via `eventErrored` (illegal event for the current state); see Error handling below
 ```
+
+## Constructor
+
+You'll probably only ever need the first two constructor parameters, but there are a few more optionally available.
+
+`StateQ.new(initialState, eventsByName, name?, isDebugEnabled?, maxQueueLength?)`
+
+| Parameter          | Type                  | Description                                                                                                                                                                                |
+| ------------------ | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `initialState`     | `string`              | The state the machine starts in.                                                                                                                                                           |
+| `eventsByName`     | `{ [string]: Event }` | The events the machine can handle and their transitions.                                                                                                                                   |
+| `name`             | `string?`             | A name used in `eventErrored` payloads and debug output. Defaults to an auto-generated `Machine{n}`.                                                                                       |
+| `isDebugEnabled`   | `boolean?`            | When `true`, the machine prints debug output. Defaults to `false`.                                                                                                                         |
+| `maxQueueLength`   | `number?`             | A positive number bounding how many events may be queued at once. When omitted, the queue is unbounded. Handling an event while the queue is full fails with a `queue`-phase `EventError`. |
+
+## Accessors
+
+| Method                | Returns      | Description                                                 |
+|-----------------------|--------------|-------------------------------------------------------------|
+| `getState()`          | `string?`    | The current state, or `nil` if the machine has finished.    |
+| `getValidEvents()`    | `{ string }` | The event names that are valid in the current state.        |
+| `getName()`           | `string`     | The machine's name.                                         |
+| `getMaxQueueLength()` | `number`     | The configured queue capacity (`math.huge` when unbounded). |
+| `isFinished()`        | `boolean`    | Whether the machine has finished (its state is `nil`).      |
+| `isDestroyed()`       | `boolean`    | Whether `destroy()` has been called.                        |
+| `isDebugEnabled()`    | `boolean`    | Whether debug output is enabled.                            |
+
+# Error handling
+
+Every call to `:handle()` enqueues the event for processing on a background thread and returns immediately. Failures fall into two categories depending on when they occur.
+
+## Synchronous errors
+
+These throw on the thread that called `:handle()` before the event is enqueued:
+
+- `eventName` is not a string (type check)
+- The machine was `destroy()`ed
+- `eventName` is not defined on the machine
+
+In normal usage with known event names, these are programmer errors and should be left to throw during development.
+
+If you are passing dynamic or untrusted event names, you can catch them with `pcall`:
+
+```luau
+local success, errorMessage = pcall(function()
+	machine:handle(someEventName)
+end)
+if not success then
+	warn(errorMessage)
+end
+```
+
+## Asynchronous errors
+
+These occur later, on the queue thread, while the event is actually being processed. They cannot propagate back to the `:handle()` caller, so they are surfaced through the `eventErrored` signal instead:
+
+- A transition callback (`beforeAsync` or `afterAsync`) throws
+- The event is illegal for the machine's **current** state at processing time (even if `:handle()` already returned)
+- An event is processed after the machine has finished
+- A non-final event's transition returns `nil`
+- A transition returns a value that fails the state type check
+- The event queue is at capacity (`maxQueueLength` exceeded)
+
+Listen for them when you want to log, recover, or assert in tests:
+
+```luau
+machine.eventErrored:Connect(function(errorInfo: StateQ.EventError)
+	warn(
+		errorInfo.eventName,
+		errorInfo.beforeState,
+		errorInfo.phase,
+		errorInfo.message
+	)
+end)
+```
+
+`eventErrored` fires an `EventError` table:
+
+| Field | Description |
+|---|---|
+| `machineName` | Name passed to `StateQ.new`, or an auto-generated default |
+| `eventName` | The event being processed |
+| `beforeState` | State when processing started, if known (same as `beforeEvent`'s second argument) |
+| `afterState` | State at failure time when it differs from `beforeState` (e.g. `afterAsync` after a transition) |
+| `phase` | `"queue"`, `"validation"`, `"beforeAsync"`, or `"afterAsync"` |
+| `message` | The error message |
+| `traceback` | Failure stack and the `:handle()` call site (`Queued from:`) |
+
+Use `StateQ.formatEventError(errorInfo)` for a single log string. Compare `errorInfo.phase` against `StateQ.EventErrorPhase.beforeAsync`, etc.
+
+If nothing is connected to `eventErrored`, the error is re-raised on a new thread so it still appears in the output rather than being silently dropped.
+
+### Swallowing asynchronous errors
+
+The default re-raise is suppressed if at least one connection to `eventErrored` exists.
+
+So if you intentionally want to swallow processing errors, you could connect an empty function:
+
+```luau
+machine.eventErrored:Connect(function(_errorInfo) end)
+```
+
 
 # Detailed system flowchart
 
@@ -107,22 +213,27 @@ light:handle(Event.SwitchOn) -- warns "Illegal event `SwitchOn` called during st
 
 # Installation
 
-If your project is set up to build with Rojo, you can add this repository as a submodule of your project by running the following command:
+## Rojo users
 
-`git submodule add https://github.com/BusyCityGuy/finite-state-machine-luau path/to/your/dependencies`
+If your project is set up to build with Rojo, the preferred installation method is using [Wally](https://wally.run/). Add this to your `wally.toml` file:
 
-<details>
-<summary>These alternative installations are not implemented yet</summary>
+```toml
+StateQ = "busycityguy/stateq@0.0.7"
+```
 
-In the future, an alternative installation method will be to download your desired release file from the [Releases](https://github.com/BusyCityGuy/latest) page.
+If you're not using Wally, you can add this repository as a submodule of your project by running the following command:
 
-Provided in the release will be a `.zip` file that can be extracted into your Rojo project, or you can download the `.rbxm` and drag it into Roblox Studio if you're not using Rojo.
+```bash
+> git submodule add <https://github.com/BusyCityGuy/finite-state-machine-luau> path/to/your/dependencies
+```
 
-Also in the future, this project will be published on [Wally](https://wally.run/), and could be installed into your project by adding `finite-state-machine = "busycityguy/finite-state-machine@0.0.0"` to your `wally.toml` file.
+If you want to avoid submodules too, you can download the `.zip` file from the [latest release](https://github.com/BusyCityGuy/finite-state-machine-luau/releases/latest) page.
 
-</details>
+## Non-Rojo users
 
-# Help!
+If you aren't using Rojo, you can download the `.rbxm` file from the [latest release](https://github.com/BusyCityGuy/finite-state-machine-luau/releases/latest) page and drag it into Roblox Studio, placing the `Packages` folder in `ReplicatedStorage`.
+
+# Feedback
 
 If you have other questions, bugs, feature requests, or feedback, please [open an issue](https://github.com/BusyCityGuy/finite-state-machine-luau/issues)!
 

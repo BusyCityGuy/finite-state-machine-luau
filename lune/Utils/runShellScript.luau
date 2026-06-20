@@ -7,13 +7,13 @@
 
 local process = require("@lune/process")
 
-local function runShellScript(scriptPath: string, args: { string }): process.SpawnResult
+local function runShellScript(scriptPath: string, args: { string }): process.ExecResult
 	local proc
 
 	if process.os == "windows" then
-		proc = process.spawn("sh", { scriptPath, table.unpack(args) })
+		proc = process.exec("sh", { scriptPath, table.unpack(args) })
 	else
-		proc = process.spawn(scriptPath, args)
+		proc = process.exec(scriptPath, args)
 	end
 
 	return proc

@@ -42,8 +42,8 @@ function ThreadQueue.new(timeBetween: number?, maxQueueLength: number?, enableCo
 	return self
 end
 
-function ThreadQueue.submitAsync(self: ClassType, callback: Callback)
-	if #self._queue > self._maxQueueLength then
+function ThreadQueue.submitAsync(self: ClassType, callback: Callback): (boolean, string?)
+	if #self._queue >= self._maxQueueLength then
 		return false, string.format("Queue is at capacity (%i)", self._maxQueueLength)
 	end
 
@@ -61,6 +61,10 @@ end
 
 function ThreadQueue.getLength(self: ClassType): number
 	return #self._queue
+end
+
+function ThreadQueue.getMaxQueueLength(self: ClassType): number
+	return self._maxQueueLength
 end
 
 function ThreadQueue.skipToLastEnqueued(self: ClassType)
@@ -97,8 +101,9 @@ function ThreadQueue._popQueueAsync(self: ClassType)
 
 	local function execute()
 		-- This callback can yield. Note the callback is called synchronously on this thread.
-		-- The task.spawn is used to resume the calling thread with the pcall'd results of the callback.
-		task.spawn(entry.thread, pcall(entry.callback))
+		-- The task.spawn is used to resume the calling thread with the xpcall'd results of the callback.
+		-- xpcall with debug.traceback preserves the stack of where inside the callback it failed.
+		task.spawn(entry.thread, xpcall(entry.callback, debug.traceback))
 	end
 
 	-- If concurrency is enabled, we do not want to yield the queue while we wait for the callback to return

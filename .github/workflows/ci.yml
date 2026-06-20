@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
   install-tools:
     name: Install tools and dependencies
@@ -13,10 +16,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4.1.7
+        uses: actions/checkout@v7.0.0
 
       - name: Install Rokit
-        uses: CompeyDev/setup-rokit@v0.1.2
+        uses: CompeyDev/setup-rokit@v0.2.1
 
       - name: Setup Lune
         run: lune setup
@@ -25,14 +28,14 @@ jobs:
         run: wally install
 
       - name: Cache installed items
-        uses: actions/cache@v4.0.2
+        uses: actions/cache@v5.0.5
         with:
           path: |
             ~/.rokit
             ~/.lune
             Packages
             DevPackages
-          key: tools-${{ hashFiles('rokit.toml') }}
+          key: tools-${{ hashFiles('rokit.toml', 'wally.lock') }}
 
   # Kampfkarren/selene is assumed to be included in the repository's rokit.toml file
   linting:
@@ -42,20 +45,20 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4.1.7
+        uses: actions/checkout@v7.0.0
 
       - name: Restore installed items
-        uses: actions/cache@v4.0.2
+        uses: actions/cache@v5.0.5
         with:
           path: |
             ~/.rokit
             ~/.lune
             Packages
             DevPackages
-          key: tools-${{ hashFiles('rokit.toml') }}
+          key: tools-${{ hashFiles('rokit.toml', 'wally.lock') }}
 
-      - name: Lint StateMachine
-        run: ./scripts/lint.sh src/StateMachine
+      - name: Lint StateQ
+        run: ./scripts/lint.sh src/StateQ
 
       - name: Lint tests
         run: ./scripts/lint.sh src/TestService
@@ -71,20 +74,20 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4.1.7
+        uses: actions/checkout@v7.0.0
 
       - name: Restore installed items
-        uses: actions/cache@v4.0.2
+        uses: actions/cache@v5.0.5
         with:
           path: |
             ~/.rokit
             ~/.lune
             Packages
             DevPackages
-          key: tools-${{ hashFiles('rokit.toml') }}
+          key: tools-${{ hashFiles('rokit.toml', 'wally.lock') }}
 
-      - name: Enforce StateMachine code style with StyLua
-        run: ./scripts/formatCheck.sh src/StateMachine
+      - name: Enforce StateQ code style with StyLua
+        run: ./scripts/formatCheck.sh src/StateQ
 
       - name: Enforce tests code style with StyLua
         run: ./scripts/formatCheck.sh src/TestService
@@ -100,22 +103,22 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4.1.7
+        uses: actions/checkout@v7.0.0
 
       - name: Restore installed items
-        uses: actions/cache@v4.0.2
+        uses: actions/cache@v5.0.5
         with:
           path: |
             ~/.rokit
             ~/.lune
             Packages
             DevPackages
-          key: tools-${{ hashFiles('rokit.toml') }}
+          key: tools-${{ hashFiles('rokit.toml', 'wally.lock') }}
 
-      - name: Analyze StateMachine with luau-lsp
+      - name: Analyze StateQ with luau-lsp
         run: |
-          ./scripts/sourcemap.sh default.project.json stateMachineSourcemap.json
-          ./scripts/analyze.sh stateMachineSourcemap.json src/StateMachine
+          ./scripts/sourcemap.sh rbxm.project.json stateQSourcemap.json
+          ./scripts/analyze.sh stateQSourcemap.json src/StateQ
 
       - name: Analyze tests with luau-lsp
         run: |
@@ -133,17 +136,17 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4.1.7
+        uses: actions/checkout@v7.0.0
 
       - name: Restore installed items
-        uses: actions/cache@v4.0.2
+        uses: actions/cache@v5.0.5
         with:
           path: |
             ~/.rokit
             ~/.lune
             Packages
             DevPackages
-          key: tools-${{ hashFiles('rokit.toml') }}
+          key: tools-${{ hashFiles('rokit.toml', 'wally.lock') }}
 
       - name: Test with Lune
         run: ./scripts/test.sh

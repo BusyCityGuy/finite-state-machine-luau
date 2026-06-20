@@ -9,17 +9,17 @@
 		lune run analyze
 --]]
 
-local Path = require("Utils/Path")
+local Path = require("./Utils/Path")
 local process = require("@lune/process")
-local runShellScript = require("Utils/runShellScript")
+local runShellScript = require("./Utils/runShellScript")
 local stdio = require("@lune/stdio")
 local task = require("@lune/task")
 
 local ANALYZE_PATHS: { { path: string, project: string?, sourceMap: string? } } = {
 	{
-		path = Path.join("src", "StateMachine"),
-		project = "default.project.json",
-		sourceMap = "stateMachineSourcemap.json",
+		path = Path.join("src", "StateQ"),
+		project = "rbxm.project.json",
+		sourceMap = "stateQSourcemap.json",
 	},
 	{
 		path = Path.join("src", "TestService"),

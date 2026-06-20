@@ -9,3 +9,5 @@ Packages
 DevPackages
 *sourcemap.json
 settings.json
+build
+.DS_Store
