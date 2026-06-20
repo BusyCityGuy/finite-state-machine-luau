@@ -2,7 +2,7 @@
 
 ## STOP
 
-If you just want to use the final product, this readme is not for you. This readme is related contributing to the project, not using it.
+If you just want to use the final product, this readme is not for you. This readme is related to contributing to the project, not using it.
 
 If you have questions, bugs, feature requests, or feedback, please [open an issue](https://github.com/BusyCityGuy/finite-state-machine-luau/issues)!
 
@@ -74,10 +74,10 @@ The following package is installed as a production dependency:
 
 The following packages are installed as dev dependencies:
 
-| Package                           | Description                                                                                                                                                                                                                                            |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Jest** for testing              | This project uses [Jest](https://jsdotlua.github.io/jest-lua/) to run tests on the state machine project to ensure accuracy and catch bugs during development. See [Running Tests](#run-tests) for instructions on how to run these tests.             |
-| **Freeze** for table manipulation | This project uses [Freeze](https://duckarmor.github.io/Freeze/) to simplify manipulation of tables to make tests more concise and easier to understand.                                                                                                |
+| Package                        | Description                                                                                                                                                                                                                                |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Jest** for testing           | This project uses [Jest](https://jsdotlua.github.io/jest-lua/) to run tests on the state machine project to ensure accuracy and catch bugs during development. See [Run tests](#run-tests) for instructions on how to run these tests.     |
+| **JestGlobals** for test setup | Test files import Jest globals such as `describe`, `it`, and `expect` from this companion package.                                                                                                                                         |
 
 ## Set up Lune for your editor
 
@@ -176,7 +176,7 @@ If you're running tests in Lune from the CLI, you don't need to worry about this
 
 However, running tests in Roblox Studio requires flipping the `FFlagEnableLoadModule` flag to get access to this function. (Track the issue [here](https://github.com/jsdotlua/jest-lua/issues/3))
 
-This instructions to flip this flag differ on Mac vs Windows.
+The instructions to flip this flag differ on Mac vs Windows.
 
 - **For Mac users:** see [this issue](https://github.com/jsdotlua/jest-lua/issues/6).
 - **For Windows users:** see [this devforum post](https://devforum.roblox.com/t/how-to-return-altenter-to-its-prior-functionality/997206)
